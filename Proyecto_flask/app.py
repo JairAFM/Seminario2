@@ -58,7 +58,7 @@ def crear_cuenta():
 
 #ver las mesas disponibles
 @app.route('/reservar', methods=['GET'])
-def inicio_sesion():
+def mesas():
     if request.method == 'GET':
         cur = mysql.connection.cursor()
         cur.execute('SELECT * FROM proyecto.mesas')
