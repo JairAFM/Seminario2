@@ -24,6 +24,7 @@ app.config['MYSQL_PASSWORD'] = 'admin'
 app.config['MYSQL_DB'] = 'restaurantes'
 mysql = MySQL(app)
 
+#validar inicio de sesion 
 @app.route('/inicio_sesion', methods=['GET'])
 def inicio_sesion():
     if request.method == 'GET':
@@ -31,11 +32,11 @@ def inicio_sesion():
         password = request.form['password']
         
         cur = mysql.connection.cursor()
-        cur.execute('INSERT INTO restaurantes.clientes (email, nombre, apellido, telefono, password, fecha_creacion) VALUES (%s, %s, %s, %s, %s, NOW())', 
-                    (email, nombre, apellido, telefono, password))
+        cur.execute('SELECT * FROM proyecto.clientes WHERE EMAIL = ' + email + 'AND PASSWORD =' + password)
         mysql.connection.commit()
         return 'received'
     
+#crear una cuenta
 @app.route('/crear_cuenta', methods=['POST'])
 def crear_cuenta():
     if request.method == 'POST':
@@ -50,10 +51,19 @@ def crear_cuenta():
             return 'las contraseñas no son iguales'
         
         cur = mysql.connection.cursor()
-        cur.execute('INSERT INTO restaurantes.clientes (email, nombre, apellido, telefono, password, fecha_creacion) VALUES (%s, %s, %s, %s, %s, NOW())', 
+        cur.execute('INSERT INTO proyecto.clientes (email, nombre, apellido, telefono, password, fecha_creacion) VALUES (%s, %s, %s, %s, %s, NOW())', 
                     (email, nombre, apellido, telefono, password))
         mysql.connection.commit()
         return 'received'
 
+#ver las mesas disponibles
+@app.route('/reservar', methods=['GET'])
+def inicio_sesion():
+    if request.method == 'GET':
+        cur = mysql.connection.cursor()
+        cur.execute('SELECT * FROM proyecto.mesas')
+        mysql.connection.commit()
+        return 'received'
+    
 if __name__ == '__main__':
     app.run(debug= True)
