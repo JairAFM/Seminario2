@@ -9,13 +9,20 @@ app = Flask(__name__)
 def inicio():
     return render_template('views/index.html')
 
+#pantalla de inicio de sesion
 @app.route('/login')
 def login():
-    return render_template('views/iniciosesion.html')
+    return render_template('views/login.html')
 
+#pantalla de crear cuenta
 @app.route('/crear')
 def crear():
     return render_template('views/crear_cuenta.html')
+
+#pantalla de reservar mesa
+@app.route('/reserva')
+def reserva():
+    return render_template('views/reserva.html')
 
 #conexion con la base de datos 
 app.config['MYSQL_HOST'] = 'localhost'
@@ -32,7 +39,7 @@ def inicio_sesion():
         password = request.form['password']
         
         cur = mysql.connection.cursor()
-        cur.execute('SELECT * FROM proyecto.clientes WHERE EMAIL = ' + email + 'AND PASSWORD =' + password)
+        cur.execute('SELECT count(*) FROM proyecto.clientes WHERE EMAIL = ' + email + 'AND PASSWORD =' + password)
         mysql.connection.commit()
         return 'received'
     
