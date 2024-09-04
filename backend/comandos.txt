@@ -1,0 +1,4 @@
+entrar al env: .\env\Scripts\activate
+correr: flask --app Principal run
+debuggear: flask --app Principal --debug run 
+librerias instaladas: pip list  
