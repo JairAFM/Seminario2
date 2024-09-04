@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #BABFFF;
+        }
+        .container {
+            max-width: 400px;
+            margin-top: 100px;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+        }
+        .card-header {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            background-color: #424EFC;
+            color: white;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+        }
+        .btn-login {
+            background-color: #4289FC;
+            color: white;
+        }
+        .btn-login:hover {
+            background-color: #424EFC;
+        }
+        .btn-create-account {
+            background-color: #AF42FC;
+            color: white;
+        }
+        .btn-create-account:hover {
+            background-color: #7242FC;
+        }
+        .form-text {
+            color: #424EFC;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                Iniciar Sesión
+            </div>
+            <div class="card-body">
+                <form  action="/inicio_sesion" method="GET">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email:</label>
+                        <input type="email" class="form-control" id="email" name="email" placeholder="Ingrese su correo" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Contraseña:</label>
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Ingresa tu contraseña" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-login w-100 mb-2">Iniciar Sesión</button>
+                </form>
+
+                <div class="text-center">
+                    <p class="form-text">¿No tienes una cuenta?</p>
+                    <a href="/crear" class="btn btn-create-account w-100">Crear Cuenta</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

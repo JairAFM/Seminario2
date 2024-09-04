@@ -8,14 +8,23 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        body {
+            background-color: #BABFFF; /* Fondo general */
+        }
+
         .sidebar {
             min-height: 100vh;
-            background-color: #f8f9fa;
+            background-color: #424EFC; /* Fondo de la barra lateral */
         }
 
         .sidebar .nav-link {
-            color: #6c757d;
+            color: #ffffff; /* Color de texto de los enlaces de la barra lateral */
             font-weight: 500;
+        }
+
+        .sidebar .nav-link.active {
+            background-color: #4289FC; /* Fondo de enlace activo */
+            color: #ffffff; /* Color de texto del enlace activo */
         }
 
         .sidebar .nav-link i {
@@ -27,10 +36,19 @@
         }
 
         .maintenance-box {
-            background-color: #e9ecef;
+            background-color: #e9ecef; /* Fondo de las cajas de mantenimiento */
             border-radius: 8px;
             padding: 20px;
             margin-top: 20px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 8px;
+        }
+
+        .card-img-top {
+            border-radius: 8px;
         }
     </style>
 </head>
@@ -43,7 +61,7 @@
                     <ul class="nav flex-column">
                         <li class="nav-item">
                             <a class="nav-link active" href="#">
-                                <i class="fas fa-utensils"></i> Ver Menu
+                                <i class="fas fa-utensils"></i> Ver Menú
                             </a>
                         </li>
                         <li class="nav-item">
@@ -52,7 +70,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="/reserva">
                                 <i class="fas fa-calendar-alt"></i> Reservar
                             </a>
                         </li>
@@ -67,10 +85,10 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                          <a class="nav-link" href="/crear">
-                            <i class="fa-regular fa-user"></i>Crear Cuenta 
-                          </a>
-                      </li>
+                            <a class="nav-link" href="/login">
+                                <i class="fa-regular fa-user"></i> Iniciar Sesión
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </nav>
@@ -81,10 +99,11 @@
                 </div>
 
                 <div class="row">
-                  <div class="card">
-                    <div class="bg-image hover-overlay ripple" data-mdb-ripple-color="light">
-                        <img src="/assets/logoG.png" style="width: 150px; height: 150px; display: block; margin: auto;"class="card-img-top"/>                    </div>
-                  </div>
+                    <div class="card">
+                        <div class="bg-image hover-overlay ripple" data-mdb-ripple-color="light">
+                            <img src="/assets/logoG.png" style="width: 150px; height: 150px; display: block; margin: auto;" class="card-img-top"/>
+                        </div>
+                    </div>
                 </div>
             </main>
         </div>
