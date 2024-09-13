@@ -1,9 +1,10 @@
-import { createMemoryHistory, createRouter } from 'vue-router'
+import { createWebHistory, createRouter } from 'vue-router'
 
 import HomeView from './components/HelloWorld.vue'
 import Maintenances from './components/settings/index.vue'
 import Categories from './components/settings/categories.vue'
 import Status from './components/settings/status.vue'
+import Employees from './components/settings/employees.vue'
 
 const routes = [
     { 
@@ -25,11 +26,16 @@ const routes = [
         path: '/maintenances/status',
         name: 'Estados',
         component: Status,
+    },
+    {
+        path: '/maintenances/employees',
+        name: 'Empleados',
+        component: Employees,
     }
 ]
 
 const router = createRouter({
-  history: createMemoryHistory(),
+  history: createWebHistory(),
   routes,
 })
 

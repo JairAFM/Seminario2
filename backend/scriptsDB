@@ -2,7 +2,7 @@ CREATE DATABASE dbRestaurantes;
 USE dbRestaurantes;
 
 CREATE TABLE Puestos (
-    Id INT PRIMARY KEY,
+    Id INT AUTO_INCREMENT PRIMARY KEY,
     Descripcion VARCHAR(255) NOT NULL
 );
 
@@ -14,7 +14,7 @@ CREATE TABLE Imagenes (
 );
 
 CREATE TABLE Clientes (
-    Id INT PRIMARY KEY,
+    Id INT AUTO_INCREMENT PRIMARY KEY,
     Email VARCHAR(255) NOT NULL,
     Nombres VARCHAR(255) NOT NULL,
     Apellidos VARCHAR(255) NOT NULL,
@@ -25,7 +25,7 @@ CREATE TABLE Clientes (
 );
 
 CREATE TABLE Categoria (
-    Id INT PRIMARY KEY,
+    Id INT AUTO_INCREMENT PRIMARY KEY,
     Descripcion VARCHAR(255) NOT NULL
 );
 
@@ -36,7 +36,7 @@ CREATE TABLE Estados (
 );
 
 CREATE TABLE Empleados (
-    Id INT PRIMARY KEY,
+    Id INT AUTO_INCREMENT PRIMARY KEY,
     Email VARCHAR(255) NOT NULL,
     Nombres VARCHAR(255) NOT NULL,
     Apellidos VARCHAR(255) NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE Empleados (
 );
 
 CREATE TABLE Menu (
-    Id INT PRIMARY KEY,
+    Id INT AUTO_INCREMENT PRIMARY KEY,
     Titulo VARCHAR(255) NOT NULL,
     Descripcion VARCHAR(255) NOT NULL,
     Precio DECIMAL(10, 2) NOT NULL,
@@ -68,13 +68,13 @@ CREATE TABLE Menu_Imgenes (
 );
 
 CREATE TABLE Mesas (
-    Id INT PRIMARY KEY,
+    Id INT AUTO_INCREMENT PRIMARY KEY,
     Id_Mesa INT NOT NULL,
     Capacidad INT NOT NULL
 );
 
 CREATE TABLE Restaurante (
-    Id INT PRIMARY KEY,
+    Id INT AUTO_INCREMENT PRIMARY KEY,
     Direccion VARCHAR(255) NOT NULL,
     Telefono BIGINT NOT NULL,
     FechaCreacion DATETIME NOT NULL,
@@ -82,7 +82,7 @@ CREATE TABLE Restaurante (
 );
 
 CREATE TABLE Ordenes (
-    Id INT PRIMARY KEY,
+    Id INT AUTO_INCREMENT PRIMARY KEY,
     Id_Restaurante INT,
     Id_Cliente INT,
     Id_Empleado INT,
@@ -97,7 +97,7 @@ CREATE TABLE Ordenes (
 );
 
 CREATE TABLE Orden_Detalle (
-    Id INT PRIMARY KEY,
+    Id INT AUTO_INCREMENT PRIMARY KEY,
     Id_Orden INT,
     Id_Menu INT,
     Cantidad DECIMAL(10, 2) NOT NULL,
@@ -107,7 +107,7 @@ CREATE TABLE Orden_Detalle (
 );
 
 CREATE TABLE Reservaciones (
-    Id INT PRIMARY KEY,
+    Id INT AUTO_INCREMENT PRIMARY KEY,
     Id_Cliente INT,
     Id_Orden INT,
     Fecha DATETIME NOT NULL,

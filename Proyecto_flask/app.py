@@ -1,8 +1,10 @@
 from flask import *
 from flask_mysqldb import MySQL
+from flask_cors import CORS
 
 
 app = Flask(__name__)
+CORS(app) 
 
 #rutas de pantallas
 @app.route('/')
@@ -170,7 +172,7 @@ def actualizar_reserva(id):
         cursor.close()
         return jsonify({'error': str(e)}), 500
 
-#ver las mesas disponibles
+#ver las categorias disponibles
 @app.route('/getCategories', methods=['GET'])
 def getCategories():
     if request.method == 'GET':
@@ -183,13 +185,194 @@ def getCategories():
         categories = []
         for row in rows:
             category = {
-                "ID": row[0],
-                "DESCRIPCION": row[1]
+                "id": row[0],
+                "description": row[1]
             }
             categories.append(category)
 
         # Return the results as a JSON response
         return jsonify(categories)
+
+#insert categorias disponibles
+@app.route('/newCategoria', methods=['POST'])
+def newCategoria():
+    data = request.json
+    cursor = mysql.connection.cursor()
+    query = """ 
+    INSERT INTO dbRestaurantes.Categoria(Descripcion)
+    VALUES (%s) 
+    """
+    values = (
+        data['description'],
+    )
+    try:
+        cursor.execute(query, values)
+        mysql.connection.commit()
+        cursor.close()
+        return jsonify({'message': 'Categoria creada exitosamente'}), 200
+    except Exception as e:
+        cursor.close()
+        return jsonify({'error': str(e)}), 500
+
+#update categorias disponibles
+@app.route('/editCategoria/<int:id>', methods=['PUT'])
+def editCategoria(id):
+    data = request.json
+    cursor = mysql.connection.cursor()
+    query = """ 
+    UPDATE dbRestaurantes.Categoria 
+    SET Descripcion = %s 
+    WHERE Id = %s
+    """
+    values = (
+        data['description'],
+        id
+    )
+    try:
+        cursor.execute(query, values)
+        mysql.connection.commit()
+        cursor.close()
+        return jsonify({'message': 'Categoria actualizada exitosamente'}), 200
+    except Exception as e:
+        cursor.close()
+        return jsonify({'error': str(e)}), 500
+
+# Delete category by ID
+@app.route('/deleteCategoria/<int:id>', methods=['DELETE'])
+def deleteCategoria(id):
+    cursor = mysql.connection.cursor()
+    query = """ 
+    DELETE FROM dbRestaurantes.Categoria 
+    WHERE Id = %s
+    """
+    try:
+        cursor.execute(query, (id,))
+        mysql.connection.commit()
+        cursor.close()
+
+        if cursor.rowcount == 0:
+            return jsonify({'message': 'No se encontró la categoría'}), 404
+        
+        return jsonify({'message': 'Categoria eliminada exitosamente'}), 200
+    except Exception as e:
+        cursor.close()
+        return jsonify({'error': str(e)}), 500
+
+
+# Retrieve all employees
+@app.route('/getEmpleados', methods=['GET'])
+def getEmpleados():
+    cur = mysql.connection.cursor()
+    cur.execute('SELECT * FROM dbRestaurantes.Empleados')
+    rows = cur.fetchall()
+    cur.close()
+
+    empleados = []
+    for row in rows:
+        empleado = {
+            "id": row[0],
+            "email": row[1],
+            "nombres": row[2],
+            "apellidos": row[3],
+            "telefono": row[4],
+            "id_puesto": row[5],
+            "salario": row[6],
+            "usuario": row[7],
+            "password": row[8],
+            "id_imagen": row[9],
+            "fechaCreacion": row[10],
+            "fechaActualizacion": row[11],
+        }
+        empleados.append(empleado)
+    
+    return jsonify(empleados)
+
+# Insert a new employee
+@app.route('/newEmpleado', methods=['POST'])
+def newEmpleado():
+    data = request.json
+    cursor = mysql.connection.cursor()
+
+    query = """ 
+    INSERT INTO dbRestaurantes.Empleados 
+    (Email, Nombres, Apellidos, Telefono, Id_Puesto, Salario, Usuario, Password, Id_Imagen, FechaCreacion, FechaActualizacion) 
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
+    """
+    values = (
+        data['email'],
+        data['nombres'],
+        data['apellidos'],
+        data.get('telefono', None),
+        data.get('id_puesto', None),
+        data['salario'],
+        data['usuario'],
+        data['password'],
+        data.get('id_imagen', None),
+        datetime.now(),
+        datetime.now()
+    )
+    try:
+        cursor.execute(query, values)
+        mysql.connection.commit()
+        cursor.close()
+        return jsonify({'message': 'Empleado creado exitosamente'}), 200
+    except Exception as e:
+        cursor.close()
+        return jsonify({'error': str(e)}), 500
+
+# Update an employee
+@app.route('/editEmpleado/<int:id>', methods=['PUT'])
+def editEmpleado(id):
+    data = request.json
+    cursor = mysql.connection.cursor()
+
+    query = """ 
+    UPDATE dbRestaurantes.Empleados 
+    SET Email = %s, Nombres = %s, Apellidos = %s, Telefono = %s, Id_Puesto = %s, Salario = %s, Usuario = %s, Password = %s, Id_Imagen = %s, FechaActualizacion = %s 
+    WHERE Id = %s
+    """
+    values = (
+        data['email'],
+        data['nombres'],
+        data['apellidos'],
+        data.get('telefono', None),
+        data.get('id_puesto', None),
+        data['salario'],
+        data['usuario'],
+        data['password'],
+        data.get('id_imagen', None),
+        datetime.now(),
+        id
+    )
+    try:
+        cursor.execute(query, values)
+        mysql.connection.commit()
+        cursor.close()
+        return jsonify({'message': 'Empleado actualizado exitosamente'}), 200
+    except Exception as e:
+        cursor.close()
+        return jsonify({'error': str(e)}), 500
+
+# Delete an employee by ID
+@app.route('/deleteEmpleado/<int:id>', methods=['DELETE'])
+def deleteEmpleado(id):
+    cursor = mysql.connection.cursor()
+    query = """ 
+    DELETE FROM dbRestaurantes.Empleados 
+    WHERE Id = %s
+    """
+    try:
+        cursor.execute(query, (id,))
+        mysql.connection.commit()
+        cursor.close()
+
+        if cursor.rowcount == 0:
+            return jsonify({'message': 'No se encontró el empleado'}), 404
+        
+        return jsonify({'message': 'Empleado eliminado exitosamente'}), 200
+    except Exception as e:
+        cursor.close()
+        return jsonify({'error': str(e)}), 500
 
     
 if __name__ == '__main__':

@@ -36,7 +36,7 @@
         <v-list-item prepend-icon="mdi-tag-multiple" title="Promos" value="promos"></v-list-item>
         <v-list-item prepend-icon="mdi-calendar-month" title="Reservar" value="reservar"></v-list-item>
         <v-list-item prepend-icon="mdi-motorbike" title="Domicilio" value="domicilio"></v-list-item>
-        <v-list-item prepend-icon="mdi-tools" title="Mantenimientos" value="mantenimientos" to="/maintenances"></v-list-item>
+        <v-list-item prepend-icon="mdi-tools" title="Mantenimientos" value="mantenimientos" href="/maintenances"></v-list-item>
       </v-list>
     </v-navigation-drawer>
   </template>

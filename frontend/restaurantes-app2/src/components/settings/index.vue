@@ -44,7 +44,7 @@
                     {
                         title: 'Empleados',
                         descrip: 'Gestiona eficientemente a tus empleados para obtener un mejor rendimiento',
-                        link: '',
+                        link: '/maintenances/employees',
                         icon: 'mdi-account-group'
                     }
                 ]
