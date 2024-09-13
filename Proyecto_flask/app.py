@@ -258,6 +258,38 @@ def deleteCategoria(id):
         cursor.close()
         return jsonify({'error': str(e)}), 500
 
+# Utility function to generate an 8-character password based on the employee's name
+def generate_password(name):
+    # Create a simple password from the first four characters of the name and four random characters
+    random_chars = ''.join(random.choices(string.ascii_letters + string.digits, k=4))
+    password = (name[:4] + random_chars).ljust(8, '0')  # Ensure the password is exactly 8 characters
+    return password
+
+# Save image to Imagenes table
+@app.route('/saveImage', methods=['POST'])
+def save_image():
+    data = request.files
+    imagen = data['image']
+    nombre = imagen.filename
+    tipo = imagen.content_type
+    imagen_blob = imagen.read()
+
+    cursor = mysql.connection.cursor()
+    query = """ 
+    INSERT INTO dbRestaurantes.Imagenes (Nombre, Tipo, Imagen) 
+    VALUES (%s, %s, %s)
+    """
+    values = (nombre, tipo, imagen_blob)
+
+    try:
+        cursor.execute(query, values)
+        image_id = cursor.lastrowid  # Get the last inserted image ID
+        mysql.connection.commit()
+        cursor.close()
+        return jsonify({'message': 'Imagen guardada exitosamente', 'id_imagen': image_id}), 200
+    except Exception as e:
+        cursor.close()
+        return jsonify({'error': str(e)}), 500
 
 # Retrieve all employees
 @app.route('/getEmpleados', methods=['GET'])
@@ -287,16 +319,20 @@ def getEmpleados():
     
     return jsonify(empleados)
 
-# Insert a new employee
+# Insert employee into Empleados table
 @app.route('/newEmpleado', methods=['POST'])
-def newEmpleado():
-    data = request.json
+def new_empleado():
+    data = request.form
+
+    # Generate password from the employee's name
+    password = generate_password(data['nombres'])
+
     cursor = mysql.connection.cursor()
 
     query = """ 
-    INSERT INTO dbRestaurantes.Empleados 
-    (Email, Nombres, Apellidos, Telefono, Id_Puesto, Salario, Usuario, Password, Id_Imagen, FechaCreacion, FechaActualizacion) 
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
+    INSERT INTO Empleados 
+    (Email, Nombres, Apellidos, Telefono, Id_Puesto, Salario, Usuario, Password, Id_Imagen, FechaCreacion, FechaActualizacion)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     values = (
         data['email'],
@@ -306,11 +342,12 @@ def newEmpleado():
         data.get('id_puesto', None),
         data['salario'],
         data['usuario'],
-        data['password'],
-        data.get('id_imagen', None),
+        password,  # Use the generated password
+        data.get('id_imagen', None),  # Image ID from the previous image save
         datetime.now(),
         datetime.now()
     )
+
     try:
         cursor.execute(query, values)
         mysql.connection.commit()

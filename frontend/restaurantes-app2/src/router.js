@@ -1,6 +1,7 @@
 import { createWebHistory, createRouter } from 'vue-router'
 
-import HomeView from './components/HelloWorld.vue'
+import HomeView from './components/menu/index.vue'
+import Promos from './components/promos/index.vue'
 import Maintenances from './components/settings/index.vue'
 import Categories from './components/settings/categories.vue'
 import Status from './components/settings/status.vue'
@@ -11,6 +12,11 @@ const routes = [
         path: '/', 
         name: 'Inicio',
         component: HomeView 
+    },
+    { 
+        path: '/promos', 
+        name: 'Promociones',
+        component: Promos 
     },
     { 
         path: '/maintenances', 
