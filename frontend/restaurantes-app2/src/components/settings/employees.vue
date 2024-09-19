@@ -53,7 +53,7 @@
                 </v-col>
                 <v-col cols="12">
                     <v-file-input
-                        v-model="form.image"
+                        @change="onFileChange"
                         label="Imagen del empleado"
                         accept="image/*"
                         prepend-icon="mdi-camera"
@@ -105,7 +105,17 @@
       this.getEmpleados();
     },
     methods: {
-                validateForm() {
+      onFileChange(event) {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            this.form.image = reader.result;
+          };
+          reader.readAsDataURL(file); // Converts the file to a base64 string
+        }
+      },
+      validateForm() {
             if (!this.form.nombres) {
             Swal.fire('Error', 'El campo "Nombres" es requerido', 'error');
             return false;
@@ -135,7 +145,7 @@
             return false;
             }
             return true;
-        },
+      },
       async getEmpleados() {
         try {
           const response = await fetch(this.baseUrl + 'getEmpleados');
