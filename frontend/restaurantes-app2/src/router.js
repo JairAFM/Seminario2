@@ -4,8 +4,11 @@ import HomeView from './components/menu/index.vue'
 import Promos from './components/promos/index.vue'
 import Maintenances from './components/settings/index.vue'
 import Categories from './components/settings/categories.vue'
+import positionEmployees from './components/settings/position-employees.vue'
 import Status from './components/settings/status.vue'
 import Employees from './components/settings/employees.vue'
+import Tables from './components/settings/tables.vue'
+import Menu from './components/settings/menu.vue'
 
 const routes = [
     { 
@@ -29,6 +32,11 @@ const routes = [
         component: Categories,
     },
     {
+        path: '/maintenances/positionEmployee',
+        name: 'Puestos',
+        component: positionEmployees,
+    },
+    {
         path: '/maintenances/status',
         name: 'Estados',
         component: Status,
@@ -37,6 +45,16 @@ const routes = [
         path: '/maintenances/employees',
         name: 'Empleados',
         component: Employees,
+    },
+    {
+        path: '/maintenances/tables',
+        name: 'Mesas',
+        component: Tables,
+    },
+    {
+        path: '/maintenances/menu',
+        name: 'Menu',
+        component: Menu,
     }
 ]
 

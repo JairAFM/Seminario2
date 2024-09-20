@@ -24,9 +24,15 @@
                         icon: 'mdi-shape'
                     },
                     {
+                        title: 'Puestos',
+                        descrip: 'Gestiona eficientemente los puestos de tus empleados',
+                        link: '/maintenances/positionEmployee',
+                        icon: 'mdi-account-wrench'
+                    },
+                    {
                         title: 'menú',
                         descrip: 'Gestiona eficientemente el menú de tu restaurante',
-                        link: '',
+                        link: '/maintenances/menu',
                         icon: 'mdi-silverware'
                     },
                     {
@@ -38,7 +44,7 @@
                     {
                         title: 'Mesas',
                         descrip: 'Gestiona eficientemente las mesas disponibles de tu restaurante',
-                        link: '',
+                        link: '/maintenances/tables',
                         icon: 'mdi-table-furniture'
                     },
                     {

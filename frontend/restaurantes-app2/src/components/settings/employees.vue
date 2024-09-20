@@ -51,7 +51,17 @@
                 <v-col cols="12" md="6">
                 <v-text-field v-model="form.email" label="Email" required></v-text-field>
                 </v-col>
-                <v-col cols="12">
+                <v-col>
+                  <v-combobox
+                    clearable
+                    label="Puesto"
+                    item-title="description"
+                    item-value="id"
+                    v-model="form.puesto"
+                    :items="Puestos"
+                  ></v-combobox>
+                </v-col>
+                <v-col cols="12" md="6">
                     <v-file-input
                         @change="onFileChange"
                         label="Imagen del empleado"
@@ -84,6 +94,10 @@
           { text: 'Email', value: 'email' },
           { text: 'Nombres', value: 'nombres' },
           { text: 'Apellidos', value: 'apellidos' },
+          { text: 'Puesto', value: 'telefono' },
+          { text: 'Puesto', value: 'puesto' },
+          { text: 'Salario', value: 'salario' },
+          { text: 'Usuario', value: 'usuario' },
           { text: 'Acciones', value: 'actions', align: 'center', sortable: false }
         ],
         empleados: [],
@@ -97,8 +111,10 @@
           telefono: null,
           salario: 0,
           usuario: '',
+          puesto: null,
           image: null,
         },
+        Puestos: [],
       };
     },
     mounted() {
@@ -140,6 +156,10 @@
             Swal.fire('Error', 'El campo "Email" es requerido', 'error');
             return false;
             }
+            if (!this.form.puesto) {
+            Swal.fire('Error', 'El campo "Puesto" es requerido', 'error');
+            return false;
+            }
             if (!this.form.image) {
             Swal.fire('Error', 'El campo "Imagen" es requerido', 'error');
             return false;
@@ -159,6 +179,7 @@
         }
       },
       openDialog(type, item = null) {
+        this.getPuestos();
         this.dialogType = type;
         if (type === 'edit' && item) {
           this.form = { ...item };
@@ -171,8 +192,9 @@
             telefono: null,
             salario: 0,
             usuario: '',
+            puesto: null,
             image: null,
-          };
+          }
         }
         this.dialog = true;
       },
@@ -185,6 +207,7 @@
         if (!this.validateForm()) {
             return; // Stop the form submission if validation fails
         }
+        this.form.puesto = this.form.puesto.id;
         try {
           const response = await fetch(url, {
             method,
@@ -220,6 +243,28 @@
           Swal.fire('Error', 'Error al eliminar el empleado', 'error');
         }
       },
+      async getPuestos() {
+      const url = this.baseUrl + 'getPuestos';
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          Swal.fire({
+            title: '¡Ha ocurrido un error!',
+            text: 'Ocurrió un error al intentar cargar los datos',
+            icon: 'error'
+          });
+          return null;
+        }
+        const json = await response.json();
+        this.Puestos = json;
+      } catch (error) {
+        Swal.fire({
+          title: '¡Ha ocurrido un error!',
+          text: 'Ocurrió un error al intentar cargar los datos',
+          icon: 'error'
+        });
+      }
+    },
     },
   };
   </script>
