@@ -525,40 +525,104 @@ def deleteMesa(id):
         cursor.close()
         return jsonify({'error': str(e)}), 500
 
-
-
-# Obtener todos los platillos
 @app.route('/menu', methods=['GET'])
-def get_menu():
-    try:
-        menu_items = Menu.query.all()
-        result = [{
-            'Id': item.Id,
-            'Titulo': item.Titulo,
-            'Descripcion': item.Descripcion,
-            'Precio': str(item.Precio),
-            'Id_Categoria': item.Id_Categoria
-        } for item in menu_items]
-        return jsonify(result), 200
-    except Exception as e:
-        return jsonify({'message': 'Error al obtener los platillos', 'error': str(e)}), 500
+def get_menu_items():
+    cur = mysql.connection.cursor()
+    cur.execute('SELECT Menu.Id, Menu.Titulo, Menu.Descripcion, Menu.Precio, Menu.Id_Categoria, Categoria.descripcion as categoria, promocion FROM dbRestaurantes.Menu INNER JOIN dbRestaurantes.Categoria ON Categoria.Id = Menu.Id_Categoria')
+    rows = cur.fetchall()
+    cur.close()
 
-# Crear un nuevo platillo
-@app.route('/newMenu', methods=['POST'])
-def add_menu():
+    platillos = []
+    for row in rows:
+        platillo = {
+            "Id": row[0],
+            "Titulo": row[1],
+            "Descripcion": row[2],
+            "Precio": row[3],
+            "Id_Categoria": row[4],
+            "Categoria": row[5],
+            "Promo": row[6],
+        }
+        platillos.append(platillo)
+
+    return jsonify(platillos), 200
+
+@app.route('/menu', methods=['POST'])
+def add_menu_item():
+    data = request.json
+    cursor = mysql.connection.cursor()
+
+    query = """
+    INSERT INTO Menu (Titulo, Descripcion, Precio, Id_Categoria, promocion)
+    VALUES (%s, %s, %s, %s, %s)
+    """
+    values = (
+        data['Titulo'],
+        data['Descripcion'],
+        data['Precio'],
+        data['Id_Categoria'],
+        data['promo']
+    )
+
     try:
-        data = request.json
-        new_item = Menu(
-            Titulo=data['Titulo'],
-            Descripcion=data['Descripcion'],
-            Precio=data['Precio'],
-            Id_Categoria=data['Id_Categoria']
-        )
-        db.session.add(new_item)
-        db.session.commit()
-        return jsonify({'message': 'Platillo agregado exitosamente'}), 201
+        cursor.execute(query, values)
+        mysql.connection.commit()
+        cursor.close()
+        return jsonify({'message': 'Platillo agregado exitosamente'}), 200
     except Exception as e:
-        return jsonify({'message': 'Error al agregar el platillo', 'error': str(e)}), 500
+        cursor.close()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/menu/<int:id>', methods=['PUT'])
+def update_menu_item(id):
+    data = request.json
+    cursor = mysql.connection.cursor()
+
+    query = """
+    UPDATE Menu 
+    SET Titulo = %s, Descripcion = %s, Precio = %s, Id_Categoria = %s, FechaActualizacion = %s 
+    WHERE Id = %s
+    """
+    values = (
+        data['Titulo'],
+        data['Descripcion'],
+        data['Precio'],
+        data['Id_Categoria'],
+        datetime.now(),
+        id
+    )
+
+    try:
+        cursor.execute(query, values)
+        mysql.connection.commit()
+        cursor.close()
+        return jsonify({'message': 'Platillo actualizado exitosamente'}), 200
+    except Exception as e:
+        cursor.close()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/menu/<int:id>', methods=['DELETE'])
+def delete_menu_item(id):
+    cursor = mysql.connection.cursor()
+    query = """
+    DELETE FROM Menu WHERE Id = %s
+    """
+    
+    try:
+        cursor.execute(query, (id,))
+        mysql.connection.commit()
+        cursor.close()
+
+        if cursor.rowcount == 0:
+            return jsonify({'message': 'No se encontró el platillo'}), 404
+        
+        return jsonify({'message': 'Platillo eliminado exitosamente'}), 200
+    except Exception as e:
+        cursor.close()
+        return jsonify({'error': str(e)}), 500
+
+
+
 
 # Obtener un platillo por ID
 @app.route('/menu/<int:id>', methods=['GET'])
@@ -576,40 +640,6 @@ def get_menu_item(id):
         }), 200
     except Exception as e:
         return jsonify({'message': 'Error al obtener el platillo', 'error': str(e)}), 500
-
-# Actualizar un platillo
-@app.route('/menu/<int:id>', methods=['PUT'])
-def update_menu_item(id):
-    try:
-        data = request.json
-        menu_item = Menu.query.get(id)
-        if not menu_item:
-            return jsonify({'message': 'Platillo no encontrado'}), 404
-
-        menu_item.Titulo = data.get('Titulo', menu_item.Titulo)
-        menu_item.Descripcion = data.get('Descripcion', menu_item.Descripcion)
-        menu_item.Precio = data.get('Precio', menu_item.Precio)
-        menu_item.Id_Categoria = data.get('Id_Categoria', menu_item.Id_Categoria)
-
-        db.session.commit()
-        return jsonify({'message': 'Platillo actualizado exitosamente'}), 200
-    except Exception as e:
-        return jsonify({'message': 'Error al actualizar el platillo', 'error': str(e)}), 500
-
-# Eliminar un platillo
-@app.route('/menu/<int:id>', methods=['DELETE'])
-def delete_menu_item(id):
-    try:
-        menu_item = Menu.query.get(id)
-        if not menu_item:
-            return jsonify({'message': 'Platillo no encontrado'}), 404
-
-        db.session.delete(menu_item)
-        db.session.commit()
-        return jsonify({'message': 'Platillo eliminado exitosamente'}), 200
-    except Exception as e:
-        return jsonify({'message': 'Error al eliminar el platillo', 'error': str(e)}), 500
-
 
     
 if __name__ == '__main__':

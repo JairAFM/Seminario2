@@ -31,8 +31,7 @@ CREATE TABLE Categoria (
 
 CREATE TABLE Estados (
     Id INT PRIMARY KEY,
-    Descripcion VARCHAR(255) NOT NULL,
-    Capacidad INT NOT NULL
+    Descripcion VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE Empleados (
@@ -55,9 +54,10 @@ CREATE TABLE Empleados (
 CREATE TABLE Menu (
     Id INT AUTO_INCREMENT PRIMARY KEY,
     Titulo VARCHAR(255) NOT NULL,
-    Descripcion VARCHAR(255) NOT NULL,
+    Descripcion VARCHAR(500) NOT NULL,
     Precio DECIMAL(10, 2) NOT NULL,
     Id_Categoria INT,
+    promocion int,
     FOREIGN KEY (Id_Categoria) REFERENCES Categoria(Id)
 );
 
@@ -69,7 +69,6 @@ CREATE TABLE Menu_Imgenes (
 
 CREATE TABLE Mesas (
     Id INT AUTO_INCREMENT PRIMARY KEY,
-    Id_Mesa INT NOT NULL,
     Capacidad INT NOT NULL
 );
 
@@ -117,3 +116,4 @@ CREATE TABLE Reservaciones (
     FOREIGN KEY (Id_Orden) REFERENCES Ordenes(Id),
     FOREIGN KEY (Id_Estado) REFERENCES Estados(Id)
 );
+

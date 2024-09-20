@@ -21,18 +21,25 @@
             type="number"
             required
           ></v-text-field>
-          <v-select
+          <v-combobox
+            clearable
+            label="Categoria"
+            item-title="description"
+            item-value="id"
             v-model="formData.Id_Categoria"
             :items="categorias"
-            label="Categoría"
-            required
-          ></v-select>
+          ></v-combobox>
+          <v-checkbox
+            v-model="formData.promo"
+            label="Promocion"
+            :value="1"
+          ></v-checkbox>
         </v-form>
         <!-- Botón para Vista Previa -->
         <v-btn @click="showPreview = true">Vista Previa</v-btn>
       </v-card-text>
       <v-card-actions>
-        <v-btn @click="submitForm" :disabled="!valid">Agregar Platillo</v-btn>
+        <v-btn color="blue darken-1" text @click="submitForm" :disabled="!valid">Agregar Platillo</v-btn>
       </v-card-actions>
     </v-card>
 
@@ -43,8 +50,8 @@
         <v-card-text>
           <h3>{{ formData.Titulo }}</h3>
           <p>{{ formData.Descripcion }}</p>
-          <p><strong>Precio:</strong> ${{ formData.Precio }}</p>
-          <p><strong>Categoría:</strong> {{ getCategoriaName(formData.Id_Categoria) }}</p>
+          <p><strong>Precio:</strong> Q{{ formData.Precio }}</p>
+          <p><strong>Categoría:</strong> {{ formData.Id_Categoria.description }}</p>
         </v-card-text>
         <v-card-actions>
           <v-btn @click="showPreview = false">Cerrar</v-btn>
@@ -53,7 +60,22 @@
     </v-dialog>
 
     <!-- Tabla para mostrar los platillos existentes -->
-    <v-data-table :items="menuItems" :headers="headers">
+    <v-data-table :headers="headers" :items="menuItems" 
+        item-value="id"
+        class="elevation-1"
+        items-per-page-text="Registros por página"
+        no-data-text="No se han encontrado datos disponibles"
+        :items-per-page-options="[{value: 10, title: '10'},
+                                  {value: 20, title: '20'},
+                                  {value: 30, title: '30'}]">
+      <template v-slot:item.Promo="{ item }">
+        <template v-if="item.Promo == 0">
+          No
+        </template>
+        <template v-else>
+          Si
+        </template>
+      </template>
       <template v-slot:item.acciones="{ item }">
         <v-btn @click="openDialog('edit', item)">Editar</v-btn>
         <v-btn color="red" @click="deleteMenuItem(item.Id)">Eliminar</v-btn>
@@ -93,19 +115,19 @@ export default {
         Descripcion: '',
         Precio: null,
         Id_Categoria: null,
+        promo: 0
       },
       editData: {},
       menuItems: [],
-      categorias: [
-        { text: 'Entrada', value: 1 },
-        { text: 'Plato Fuerte', value: 2 },
-        { text: 'Postre', value: 3 },
-      ],
+      categorias: [],
       headers: [
-        { text: 'Título', value: 'Titulo' },
-        { text: 'Descripción', value: 'Descripcion' },
-        { text: 'Precio', value: 'Precio' },
-        { text: 'Acciones', value: 'acciones', sortable: false },
+        { text: 'Id', key: 'Id' },
+        { text: 'Título', key: 'Titulo' },
+        { text: 'Descripción', key: 'Descripcion' },
+        { text: 'Precio', key: 'Precio' },
+        { text: 'Categoria', key: 'Categoria' },
+        { text: 'Promocion', key: 'Promo' },
+        { text: 'Acciones', key: 'acciones', sortable: false },
       ],
       valid: false,
       showPreview: false,
@@ -114,6 +136,7 @@ export default {
   },
   mounted() {
     this.getMenuItems();
+    this.getCategories();
   },
   methods: {
     async getMenuItems() {
@@ -147,7 +170,7 @@ export default {
         });
         return;
       }
-
+      this.formData.Id_Categoria = this.formData.Id_Categoria.id;
       const url = this.baseUrl + 'menu';
       const request = new Request(url, {
         method: 'POST',
@@ -246,10 +269,29 @@ export default {
         this.showEditDialog = true;
       }
     },
-    getCategoriaName(id) {
-      const categoria = this.categorias.find(cat => cat.value === id);
-      return categoria ? categoria.text : 'N/A';
-    },
+    async getCategories() {
+    const url = this.baseUrl + "getCategories";
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        Swal.fire({
+          title: '¡Ha ocurrido un error!',
+          text: 'Ocurrió un error al intentar cargar los datos',
+          icon: 'error'
+        });
+        return null;
+      }
+      const json = await response.json();
+      this.categorias = json;
+    } catch (error) {
+        Swal.fire({
+          title: '¡Ha ocurrido un error!',
+          text: 'Ocurrió un error al intentar cargar los datos',
+          icon: 'error'
+        });
+        return null;
+    }
+  },
   },
 };
 </script>
