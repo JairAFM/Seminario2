@@ -6,13 +6,6 @@ CREATE TABLE Puestos (
     Descripcion VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE Imagenes (
-    Id INT AUTO_INCREMENT PRIMARY KEY,
-    Nombre VARCHAR(255),
-    Tipo VARCHAR(50),
-    Imagen LONGBLOB
-);
-
 CREATE TABLE Clientes (
     Id INT AUTO_INCREMENT PRIMARY KEY,
     Email VARCHAR(255) NOT NULL,
@@ -44,11 +37,10 @@ CREATE TABLE Empleados (
     Salario DECIMAL(10, 2) NOT NULL,
     Usuario VARCHAR(255) NOT NULL,
     Password VARCHAR(255) NOT NULL,
-    Id_Imagen INT,
+    imagen VARCHAR(255) NOT NULL,
     FechaCreacion DATETIME NOT NULL,
     FechaActualizacion DATETIME NOT NULL,
-    FOREIGN KEY (Id_Puesto) REFERENCES Puestos(Id),
-    FOREIGN KEY (Id_Imagen) REFERENCES Imagenes(Id)
+    FOREIGN KEY (Id_Puesto) REFERENCES Puestos(Id)
 );
 
 CREATE TABLE Menu (
@@ -58,24 +50,21 @@ CREATE TABLE Menu (
     Precio DECIMAL(10, 2) NOT NULL,
     Id_Categoria INT,
     promocion int,
+    imagenes JSON NOT NULL,
     FOREIGN KEY (Id_Categoria) REFERENCES Categoria(Id)
-);
-
-CREATE TABLE Menu_Imgenes (
-    Id_Menu INT NOT NULL,
-    Id_Imagen INT NOT NULL,
-    PRIMARY KEY(Id_Menu, Id_Imagen)
 );
 
 CREATE TABLE Mesas (
     Id INT AUTO_INCREMENT PRIMARY KEY,
-    Capacidad INT NOT NULL
+    Capacidad INT NOT NULL,
+    imagenes JSON
 );
 
 CREATE TABLE Restaurante (
     Id INT AUTO_INCREMENT PRIMARY KEY,
     Direccion VARCHAR(255) NOT NULL,
     Telefono BIGINT NOT NULL,
+    imagenes JSON,
     FechaCreacion DATETIME NOT NULL,
     FechaActualizacion DATETIME NOT NULL
 );
@@ -99,7 +88,7 @@ CREATE TABLE Orden_Detalle (
     Id INT AUTO_INCREMENT PRIMARY KEY,
     Id_Orden INT,
     Id_Menu INT,
-    Cantidad DECIMAL(10, 2) NOT NULL,
+    Cantidad int NOT NULL,
     Precio DECIMAL(10, 2) NOT NULL,
     FOREIGN KEY (Id_Orden) REFERENCES Ordenes(Id),
     FOREIGN KEY (Id_Menu) REFERENCES Menu(Id)
@@ -116,4 +105,3 @@ CREATE TABLE Reservaciones (
     FOREIGN KEY (Id_Orden) REFERENCES Ordenes(Id),
     FOREIGN KEY (Id_Estado) REFERENCES Estados(Id)
 );
-
