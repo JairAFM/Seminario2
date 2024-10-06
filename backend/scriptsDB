@@ -12,7 +12,6 @@ CREATE TABLE Clientes (
     Nombres VARCHAR(255) NOT NULL,
     Apellidos VARCHAR(255) NOT NULL,
     Telefono BIGINT,
-    Password VARCHAR(255) NOT NULL,
     FechaCreacion DATETIME NOT NULL,
     FechaActualizacion DATETIME NOT NULL
 );
@@ -22,7 +21,7 @@ CREATE TABLE Categoria (
     Descripcion VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE Estados (
+CREATE TABLE EstadosReserva (
     Id INT PRIMARY KEY,
     Descripcion VARCHAR(255) NOT NULL
 );
@@ -35,8 +34,6 @@ CREATE TABLE Empleados (
     Telefono BIGINT,
     Id_Puesto INT,
     Salario DECIMAL(10, 2) NOT NULL,
-    Usuario VARCHAR(255) NOT NULL,
-    Password VARCHAR(255) NOT NULL,
     imagen VARCHAR(255) NOT NULL,
     FechaCreacion DATETIME NOT NULL,
     FechaActualizacion DATETIME NOT NULL,
@@ -50,7 +47,12 @@ CREATE TABLE Menu (
     Precio DECIMAL(10, 2) NOT NULL,
     Id_Categoria INT,
     promocion int,
+    precio_promo DECIMAL(10, 2),
+    fechaIni_promo DATETIME,
+    fechaFin_promo DATETIME,
     imagenes JSON NOT NULL,
+    FechaCreacion DATETIME NOT NULL,
+    FechaActualizacion DATETIME NOT NULL
     FOREIGN KEY (Id_Categoria) REFERENCES Categoria(Id)
 );
 
@@ -60,25 +62,14 @@ CREATE TABLE Mesas (
     imagenes JSON
 );
 
-CREATE TABLE Restaurante (
-    Id INT AUTO_INCREMENT PRIMARY KEY,
-    Direccion VARCHAR(255) NOT NULL,
-    Telefono BIGINT NOT NULL,
-    imagenes JSON,
-    FechaCreacion DATETIME NOT NULL,
-    FechaActualizacion DATETIME NOT NULL
-);
-
 CREATE TABLE Ordenes (
     Id INT AUTO_INCREMENT PRIMARY KEY,
-    Id_Restaurante INT,
     Id_Cliente INT,
     Id_Empleado INT,
     Id_Mesa INT,
     Tipo VARCHAR(50),
     Fecha DATETIME NOT NULL,
     Total DECIMAL(10, 2) NOT NULL,
-    FOREIGN KEY (Id_Restaurante) REFERENCES Restaurante(Id),
     FOREIGN KEY (Id_Cliente) REFERENCES Clientes(Id),
     FOREIGN KEY (Id_Empleado) REFERENCES Empleados(Id),
     FOREIGN KEY (Id_Mesa) REFERENCES Mesas(Id)
@@ -96,12 +87,32 @@ CREATE TABLE Orden_Detalle (
 
 CREATE TABLE Reservaciones (
     Id INT AUTO_INCREMENT PRIMARY KEY,
-    Id_Cliente INT,
-    Id_Orden INT,
+    Id_Cliente INT NOT NULL,
+    Id_Orden INT NOT NULL,
     Fecha DATETIME NOT NULL,
     No_Personas INT NOT NULL,
     Id_Estado INT,
     FOREIGN KEY (Id_Cliente) REFERENCES Clientes(Id),
     FOREIGN KEY (Id_Orden) REFERENCES Ordenes(Id),
-    FOREIGN KEY (Id_Estado) REFERENCES Estados(Id)
+    FOREIGN KEY (Id_Estado) REFERENCES EstadosReserva(Id)
+);
+
+CREATE TABLE Usuario (
+    Usuario VARCHAR(255) NOT NULL,
+    Password VARCHAR(255) NOT NULL,
+    id_user int not null,
+    Tipo int not null,
+    PRIMARY KEY (Usuario,id_user,Tipo)
+);
+
+CREATE TABLE Reserva_Temporal (
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    Id_Mesa INT NOT NULL,
+    Id_Estado INT NOT NULL,
+    Id_Cliente int not null, 
+    Inicio DATETIME,
+    Fin DATETIME,
+    FOREIGN KEY (Id_Cliente) REFERENCES Clientes(Id),
+    FOREIGN KEY (Id_Estado) REFERENCES EstadosReserva(Id),
+    FOREIGN KEY (Id_Mesa) REFERENCES Mesas(Id)
 );
