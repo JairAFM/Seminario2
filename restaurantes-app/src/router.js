@@ -1,5 +1,7 @@
 import { createWebHistory, createRouter } from 'vue-router'
 
+import CreateAccount from './components/session/create-account.vue'
+
 import HomeView from './components/menu/index.vue'
 import Promos from './components/promos/index.vue'
 import Maintenances from './components/settings/index.vue'
@@ -15,6 +17,11 @@ const routes = [
         path: '/', 
         name: 'Inicio',
         component: HomeView 
+    },
+    {
+        path: '/crearCuenta', 
+        name: 'Crear Cuenta',
+        component: CreateAccount 
     },
     { 
         path: '/promos', 

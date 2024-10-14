@@ -4,20 +4,19 @@
       :rail="rail"
       permanent
       @click="rail = false"
-      color="primary"
+      color="amber-lighten-3"
     >
       <v-list-item nav>
         <template v-slot:prepend v-if="rail">            
-            <v-list-item prepend-icon="mdi-account-circle" class="pa-2"></v-list-item>
+            <v-list-item prepend-icon="mdi-chevron-right" class="pa-2"></v-list-item>
         </template>
-        <div>
+        <div v-if="false">
             <div class="d-flex justify-center">
                 <v-icon icon="mdi-account-circle" size="5rem"></v-icon>
             </div>
             <div class="d-flex justify-center">
                 <v-btn size="large" variant="flat" elevated color="primary" append-icon="mdi-login">Inicia Sesión</v-btn>
             </div>
-            
             <div class="d-flex justify-center">
                 <v-btn size="large" variant="flat" elevated color="primary" append-icon="mdi-account-plus">Registrate</v-btn>
             </div>

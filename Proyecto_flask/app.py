@@ -4,11 +4,37 @@ from flask_cors import CORS
 import random
 import string
 from datetime import datetime
-
-
+import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
+
+UPLOAD_FOLDER = 'assets/uploads/'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Extensiones permitidas
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
 CORS(app) 
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def upload_file(file):
+    
+    # Verifica si es una extensión permitida
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+        
+        # Construye la URL para la imagen
+        #image_url = url_for('static', filename=f'uploads/{filename}')
+        
+        # Muestra la imagen devuelta en el frontend
+        return {'save': True, 'filename': filename}
+    
+    return {'save': False, 'filename': ''}
 
 #rutas de pantallas
 @app.route('/')
@@ -350,7 +376,7 @@ def save_image(nombre, imagen, tipo):
 @app.route('/getEmpleados', methods=['GET'])
 def getEmpleados():
     cur = mysql.connection.cursor()
-    cur.execute('SELECT Empleados.id, Empleados.Email, Empleados.Nombres, Empleados.Apellidos, Empleados.Telefono, Empleados.Id_Puesto, Puestos.Descripcion as Puesto, Empleados.Salario, Empleados.Usuario, Imagenes.Imagen, Empleados.Id_Imagen FROM dbRestaurantes.Empleados INNER JOIN dbRestaurantes.Puestos ON Puestos.Id=Empleados.Id_Puesto INNER JOIN dbRestaurantes.Imagenes ON Imagenes.Id=Empleados.Id_Imagen')
+    cur.execute('SELECT Empleados.id, Empleados.Email, Empleados.Nombres, Empleados.Apellidos, Empleados.Telefono, Empleados.Id_Puesto, Puestos.Descripcion as Puesto, Empleados.Salario, Empleados.Usuario, Empleados.Imagen, FROM dbRestaurantes.Empleados INNER JOIN dbRestaurantes.Puestos ON Puestos.Id=Empleados.Id_Puesto')
     rows = cur.fetchall()
     cur.close()
     empleados = []
