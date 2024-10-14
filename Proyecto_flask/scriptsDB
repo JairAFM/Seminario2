@@ -62,17 +62,21 @@ CREATE TABLE Mesas (
     imagenes JSON
 );
 
+CREATE TABLE Tipo_Orden(
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    Descripcion VARCHAR(255) NOT NULL
+)
+
 CREATE TABLE Ordenes (
     Id INT AUTO_INCREMENT PRIMARY KEY,
     Id_Cliente INT,
     Id_Empleado INT,
-    Id_Mesa INT,
-    Tipo VARCHAR(50),
+    Id_Tipo INT,
     Fecha DATETIME NOT NULL,
     Total DECIMAL(10, 2) NOT NULL,
     FOREIGN KEY (Id_Cliente) REFERENCES Clientes(Id),
     FOREIGN KEY (Id_Empleado) REFERENCES Empleados(Id),
-    FOREIGN KEY (Id_Mesa) REFERENCES Mesas(Id)
+    FOREIGN KEY (Id_Tipo) REFERENCES Tipo_Orden(Id)
 );
 
 CREATE TABLE Orden_Detalle (
@@ -87,9 +91,11 @@ CREATE TABLE Orden_Detalle (
 
 CREATE TABLE Reservaciones (
     Id INT AUTO_INCREMENT PRIMARY KEY,
+    Id_Mesa INT NOT NULL,
     Id_Cliente INT NOT NULL,
     Id_Orden INT NOT NULL,
-    Fecha DATETIME NOT NULL,
+    Inicio DATETIME,
+    Fin DATETIME,
     No_Personas INT NOT NULL,
     Id_Estado INT,
     FOREIGN KEY (Id_Cliente) REFERENCES Clientes(Id),
@@ -101,18 +107,6 @@ CREATE TABLE Usuario (
     Usuario VARCHAR(255) NOT NULL,
     Password VARCHAR(255) NOT NULL,
     id_user int not null,
-    Tipo int not null,
+    Tipo_user int not null,
     PRIMARY KEY (Usuario,id_user,Tipo)
-);
-
-CREATE TABLE Reserva_Temporal (
-    Id INT AUTO_INCREMENT PRIMARY KEY,
-    Id_Mesa INT NOT NULL,
-    Id_Estado INT NOT NULL,
-    Id_Cliente int not null, 
-    Inicio DATETIME,
-    Fin DATETIME,
-    FOREIGN KEY (Id_Cliente) REFERENCES Clientes(Id),
-    FOREIGN KEY (Id_Estado) REFERENCES EstadosReserva(Id),
-    FOREIGN KEY (Id_Mesa) REFERENCES Mesas(Id)
 );
