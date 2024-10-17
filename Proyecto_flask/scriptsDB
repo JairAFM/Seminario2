@@ -52,7 +52,7 @@ CREATE TABLE Menu (
     fechaFin_promo DATETIME,
     imagenes JSON NOT NULL,
     FechaCreacion DATETIME NOT NULL,
-    FechaActualizacion DATETIME NOT NULL
+    FechaActualizacion DATETIME NOT NULL,
     FOREIGN KEY (Id_Categoria) REFERENCES Categoria(Id)
 );
 
@@ -65,7 +65,7 @@ CREATE TABLE Mesas (
 CREATE TABLE Tipo_Orden(
     Id INT AUTO_INCREMENT PRIMARY KEY,
     Descripcion VARCHAR(255) NOT NULL
-)
+);
 
 CREATE TABLE Ordenes (
     Id INT AUTO_INCREMENT PRIMARY KEY,
@@ -100,7 +100,8 @@ CREATE TABLE Reservaciones (
     Id_Estado INT,
     FOREIGN KEY (Id_Cliente) REFERENCES Clientes(Id),
     FOREIGN KEY (Id_Orden) REFERENCES Ordenes(Id),
-    FOREIGN KEY (Id_Estado) REFERENCES EstadosReserva(Id)
+    FOREIGN KEY (Id_Estado) REFERENCES EstadosReserva(Id),
+    FOREIGN KEY (Id_Mesa) REFERENCES Mesas(Id)
 );
 
 CREATE TABLE Usuario (
@@ -108,5 +109,5 @@ CREATE TABLE Usuario (
     Password VARCHAR(255) NOT NULL,
     id_user int not null,
     Tipo_user int not null,
-    PRIMARY KEY (Usuario,id_user,Tipo)
+    PRIMARY KEY (Usuario,id_user,Tipo_user)
 );
