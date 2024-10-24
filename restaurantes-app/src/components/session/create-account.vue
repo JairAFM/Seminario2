@@ -71,7 +71,7 @@
                         class="mb-2"
                         v-model="confirmPass"
                         :readonly="loading"
-                        :rules="[confirmPRules, matchPasswords]"
+                        :rules="[matchPasswords]"
                         :type="showConfirmP ? 'text' : 'password'"
                         :append-icon="showConfirmP ? 'mdi-eye' : 'mdi-eye-off'"
                         @click:append="showConfirmP = !showConfirmP"
@@ -116,6 +116,7 @@
 <script>
     export default {
         data: () => ({
+            baseUrl: 'http://127.0.0.1:5000/',
             form: false,
             email: '',
             emailRules: [
@@ -166,21 +167,49 @@
             confirmPRules: [
                 value => {
                     if (value) return true
-                    return 'La confirmación contraseña es requerida.'
+                    return 
                 },
             ],
             loading: false,
         }),
         methods: {
             matchPasswords() {
-                return this.password === this.confirmPass || 'Las contraseñas no coinciden.';
+                return !this.confirmPass ? 'La confirmación contraseña es requerida.' : (this.password !== this.confirmPass ? 'Las contraseñas no coinciden.' : null);
             },
-            createAccount () {
-                if (!this.form) return
+            async createAccount() {
+                try {
+                    this.loading = true;
+                    const url = this.baseUrl + 'crear_cuenta';
+                    let data = {
+                            email: this.email,
+                            nombres: this.name,
+                            apellidos: this.lastName,
+                            telefono: this.phone,
+                            password: this.password,
+                            password2: this.confirmPass // Envía la contraseña al back-end
+                        };
+                    const request1 = new Request(url, {
+                        method: "POST",
+                        headers: {
+                        'Content-Type': 'application/json' // Ensure you're sending JSON
+                        },
+                        body: JSON.stringify(data),
+                    })
 
-                this.loading = true
-
-                setTimeout(() => (this.loading = false), 2000)
+                    const response1 = await fetch(request1);
+                    if (response1.status == 200) {
+                        alert('Cuenta creada exitosamente');
+                        this.$router.push('/');  // Redirigir al inicio de sesión o dashboard
+                    } else {
+                        const errorData = await response1.json();
+                        alert(errorData.message || ' Error al crear la cuenta');
+                    }
+                    this.loading = false;
+                } catch (error) {
+                    console.error('Error during registration:', error);
+                    alert('Ocurrio un error al intentar crear la cuenta.');
+                    this.loading = false;
+                }
             },
         },
     }

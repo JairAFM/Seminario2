@@ -113,6 +113,7 @@
           usuario: '',
           puesto: null,
           image: null,
+          mimetype: null
         },
         Puestos: [],
       };
@@ -123,10 +124,11 @@
     methods: {
       onFileChange(event) {
         const file = event.target.files[0];
+        this.form.mimetype = file.type.split('/')[1];
         if (file) {
           const reader = new FileReader();
           reader.onloadend = () => {
-            this.form.image = reader.result;
+            this.form.image = reader.result.split(',')[1];
           };
           reader.readAsDataURL(file); // Converts the file to a base64 string
         }
@@ -167,15 +169,26 @@
             return true;
       },
       async getEmpleados() {
+        const url = this.baseUrl + "getEmpleados";
         try {
-          const response = await fetch(this.baseUrl + 'getEmpleados');
-          if (response.ok) {
-            this.empleados = await response.json();
-          } else {
-            Swal.fire('Error', 'Error al cargar los empleados', 'error');
+          const response = await fetch(url);
+          if (!response.ok) {
+            Swal.fire({
+              title: '¡Ha ocurrido un error!',
+              text: 'Ocurrió un error al intentar cargar los datos',
+              icon: 'error'
+            });
+            return null;
           }
+          const json = await response.json();
+          this.empleados = json;
         } catch (error) {
-          Swal.fire('Error', 'Error al cargar los empleados', 'error');
+            Swal.fire({
+              title: '¡Ha ocurrido un error!',
+              text: 'Ocurrió un error al intentar cargar los datos',
+              icon: 'error'
+            });
+            return null;
         }
       },
       openDialog(type, item = null) {
@@ -194,6 +207,7 @@
             usuario: '',
             puesto: null,
             image: null,
+            mimetype: null
           }
         }
         this.dialog = true;
@@ -225,7 +239,7 @@
           Swal.fire('Error', `Error al ${this.dialogType === 'add' ? 'crear' : 'actualizar'} empleado`, 'error');
         }
   
-        this.closeDialog();
+        //this.closeDialog();
       },
       async deleteEmpleado(id) {
         try {

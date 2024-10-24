@@ -62,10 +62,7 @@ data() {
       { title: 'Descripción', key: 'description' },
       { title: 'Acciones', align: 'center', key: 'actions', sortable: false },
     ],
-    categories: [
-      { id: 1, description: 'Categoría 1' },
-      { id: 2, description: 'Categoría 2' },
-    ],
+    categories: [],
     dialog: false,
     dialogType: 'add',
     form: {

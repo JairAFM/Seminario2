@@ -10,7 +10,7 @@ import positionEmployees from './components/settings/position-employees.vue'
 import Status from './components/settings/status.vue'
 import Employees from './components/settings/employees.vue'
 import Tables from './components/settings/tables.vue'
-import Menu from './components/settings/menu.vue'
+import Menu from './components/settings/menuRest.vue'
 
 const routes = [
     { 
@@ -31,36 +31,43 @@ const routes = [
     { 
         path: '/maintenances', 
         name: 'Mantenimientos',
+        meta: { requiresAuth: true, requiresPermission: true },
         component: Maintenances
     },
     {
         path: '/maintenances/categories',
         name: 'Categorias',
+        meta: { requiresAuth: true, requiresPermission: true },
         component: Categories,
     },
     {
         path: '/maintenances/positionEmployee',
         name: 'Puestos',
+        meta: { requiresAuth: true },
         component: positionEmployees,
     },
     {
         path: '/maintenances/status',
         name: 'Estados',
+        meta: { requiresAuth: true, requiresPermission: true },
         component: Status,
     },
     {
         path: '/maintenances/employees',
         name: 'Empleados',
+        meta: { requiresAuth: true },
         component: Employees,
     },
     {
         path: '/maintenances/tables',
         name: 'Mesas',
+        meta: { requiresAuth: true, requiresPermission: true },
         component: Tables,
     },
     {
         path: '/maintenances/menu',
         name: 'Menu',
+        meta: { requiresAuth: true, requiresPermission: true },
         component: Menu,
     }
 ]
@@ -69,5 +76,20 @@ const router = createRouter({
   history: createWebHistory(),
   routes,
 })
+
+// Verificación global antes de acceder a rutas protegidas
+router.beforeEach((to, from, next) => {
+    const token = localStorage.getItem('token');  // Obtener el token almacenado
+    const tipoUser = localStorage.getItem('tipoUser'); // Obtener tipo de usuario
+  
+    // Si la ruta requiere autenticación y no hay token, redirige al login
+    if (to.matched.some(record => record.meta.requiresAuth) && !token) {
+      next('/');
+    } else if (to.matched.some(record => record.meta.requiresPermission) && tipoUser !== 0) {
+      next('/');
+    } else {
+      next();  // Si hay token o la ruta no requiere autenticación, permite el acceso
+    }
+  });
 
 export default router

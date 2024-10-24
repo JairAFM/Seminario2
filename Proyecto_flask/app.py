@@ -6,55 +6,16 @@ import string
 from datetime import datetime
 import os
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_jwt_extended import JWTManager, create_access_token
 
 app = Flask(__name__)
 
+#folder donde se guardaran las imagenes
 UPLOAD_FOLDER = 'assets/uploads/'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Extensiones permitidas
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-
-CORS(app) 
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def upload_file(file):
-    
-    # Verifica si es una extensión permitida
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
-        
-        # Construye la URL para la imagen
-        #image_url = url_for('static', filename=f'uploads/{filename}')
-        
-        # Muestra la imagen devuelta en el frontend
-        return {'save': True, 'filename': filename}
-    
-    return {'save': False, 'filename': ''}
-
-#rutas de pantallas
-@app.route('/')
-def inicio():
-    return render_template('views/index.html')
-
-#pantalla de inicio de sesion
-@app.route('/login')
-def login():
-    return render_template('views/login.html')
-
-#pantalla de crear cuenta
-@app.route('/crear')
-def crear():
-    return render_template('views/crear_cuenta.html')
-
-#pantalla de reservar mesa
-@app.route('/reserva')
-def reserva():
-    return render_template('views/reserva.html')
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 #conexion con la base de datos 
 app.config['MYSQL_HOST'] = 'localhost'
@@ -63,38 +24,119 @@ app.config['MYSQL_PASSWORD'] = 'root'
 app.config['MYSQL_DB'] = 'dbRestaurantes'
 mysql = MySQL(app)
 
-#validar inicio de sesion 
-@app.route('/inicio_sesion', methods=['GET'])
-def inicio_sesion():
-    if request.method == 'GET':
-        email = request.form['email']
-        password = request.form['password']
-        
-        cur = mysql.connection.cursor()
-        cur.execute('SELECT * FROM dbRestaurantes.clientes WHERE EMAIL = ' + email + 'AND PASSWORD =' + password)
-        mysql.connection.commit()
-        return 'received'
+app.config['JWT_SECRET_KEY'] = 'seminarioFinal2'
+jwt = JWTManager(app)
+
+def upload_file(image_base64, filename):
     
+    # Verifica si es una extensión permitida
+    try:
+        image_data = base64.b64decode(image_base64)
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        
+        with open(file_path, 'wb') as image_file:
+            image_file.write(image_data)
+        return True
+    except Exception as e:
+        return  False
+    
+    return False
+
+#validar inicio de sesion 
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data['username']
+    password = data['password']
+    if not username or not password:
+        return jsonify({"message": "El usuario y la contraseña son requeridos para iniciar sesión"}), 400
+
+    query = """
+        SELECT Usuario.Usuario, Usuario.Password, Usuario.Tipo_User, Clientes.Nombres, Clientes.Apellidos, Clientes.Telefono, Clientes.email 
+        FROM dbRestaurantes.Usuario 
+        INNER JOIN  dbRestaurantes.Clientes on Usuario.id_user = Clientes.id 
+        WHERE Usuario.Usuario = %s 
+        Union 
+        SELECT Usuario.Usuario, Usuario.Password, Usuario.Tipo_User, Empleados.Nombres, Empleados.Apellidos, Empleados.Telefono, Empleados.email 
+        FROM dbRestaurantes.Usuario 
+        INNER JOIN  dbRestaurantes.Empleados on Usuario.id_user = Empleados.id 
+        WHERE Usuario.Usuario = %s
+    """
+
+    cur = mysql.connection.cursor()
+
+    # Ejecuta la consulta
+    cur.execute(query, (username, username))
+
+    # Verifica si hay una fila
+    result = cur.fetchone()
+    if result:
+        stored_password_hash = result[1]  # Asumiendo que el hash de la contraseña está en la segunda columna
+        
+        # Verifica si la contraseña es correcta
+        if check_password_hash(stored_password_hash, password):
+            token = create_access_token(identity=username)
+            # Excluye la contraseña antes de devolver el resultado
+            user_data = {
+                "Usuario": result[0],
+                "Tipo_User": result[2],
+                "Nombres": result[3],
+                "Apellidos": result[4],
+                "Telefono": result[5],
+                "email": result[6]
+            }
+            return jsonify({"data": user_data, "token": token}), 200
+        else:
+            return jsonify({"message": "Contraseña incorrecta"}), 401
+    else:
+        return jsonify({"message": "Usuario no encontrado"}), 404
+       
 #crear una cuenta
 @app.route('/crear_cuenta', methods=['POST'])
 def crear_cuenta():
-    if request.method == 'POST':
-        email = request.form['email']
-        nombre = request.form['nombre']
-        apellido = request.form['apellido']
-        telefono = request.form['telefono']
-        password = request.form['password']
-        confirm_password = request.form['password2']
-
-        if password != confirm_password:
-            return 'las contraseñas no son iguales'
-        
+    data = request.json
+    email = data['email']
+    email = email.upper()
+    nombres = data['nombres']
+    apellidos = data['apellidos']
+    telefono = data['telefono']
+    password = data['password']
+    confirm_password = data['password2']
+    if not email or not nombres or not apellidos or not telefono or not password:
+        return jsonify({"message": "Todos los campos son requeridos"}), 400
+    if password != confirm_password:
+        return jsonify({"message": "las contraseñas no son iguales"}), 400
+    
+    try:
         cur = mysql.connection.cursor()
-        cur.execute('INSERT INTO dbRestaurantes.clientes (email, nombre, apellido, telefono, password, fecha_creacion) VALUES (%s, %s, %s, %s, %s, NOW())', 
-                    (email, nombre, apellido, telefono, password))
+        # Inserta los datos en la tabla Clientes
+        query_clientes = """
+        INSERT INTO Clientes (Email, Nombres, Apellidos, Telefono, FechaCreacion, FechaActualizacion)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        now = datetime.now()
+        cur.execute(query_clientes, (email, nombres, apellidos, telefono, now, now))
+        # Obtener el id del cliente recién creado
+        cliente_id = cur.lastrowid
+        # Crear hash de la contraseña
+        hashed_password = generate_password_hash(password)
+        # Inserta el usuario en la tabla Usuario
+        query_usuario = """
+        INSERT INTO Usuario (Usuario, Password, id_user, Tipo_user)
+        VALUES (%s, %s, %s, %s)
+        """
+        tipo_usuario = 1  # Tipo de usuario fijo (1) para este caso
+        cur.execute(query_usuario, (email, hashed_password, cliente_id, tipo_usuario))
+        # Confirmar ambas transacciones
         mysql.connection.commit()
-        return 'received'
+        return jsonify({"message": "Cuenta y usuario creados exitosamente"}), 200
+    except Exception as e:
+        print(f"Error al crear la cuenta: {e}")
+        mysql.connection.rollback()  # Revertir transacción en caso de error
+        return jsonify({"message": "Error al crear la cuenta"}), 500
 
+
+#-------por revisar-----------
 #ver las mesas disponibles
 @app.route('/reservar', methods=['GET'])
 def mesas():
@@ -201,6 +243,8 @@ def actualizar_reserva(id):
     except Exception as e:
         cursor.close()
         return jsonify({'error': str(e)}), 500
+
+#-------fin por revisar-----------
 
 #ver las categorias disponibles
 @app.route('/getCategories', methods=['GET'])
@@ -347,36 +391,19 @@ def deletePuesto(id):
         cursor.close()
         return jsonify({'error': str(e)}), 500
 
-# Utility function to generate an 8-character password based on the employee's name
-def generate_password(name):
-    # Create a simple password from the first four characters of the name and four random characters
-    random_chars = ''.join(random.choices(string.ascii_letters + string.digits, k=4))
-    password = (name[:4] + random_chars).ljust(8, '0')  # Ensure the password is exactly 8 characters
-    return password
-
-# Save image to Imagenes table
-def save_image(nombre, imagen, tipo):
-    cursor = mysql.connection.cursor()
-    query = """ 
-    INSERT INTO dbRestaurantes.Imagenes (Nombre, Tipo, Imagen) 
-    VALUES (%s, %s, %s)
-    """
-    values = (nombre, tipo, imagen)
-    try:
-        cursor.execute(query, values)
-        image_id = cursor.lastrowid  # Get the last inserted image ID
-        mysql.connection.commit()
-        cursor.close()
-        return image_id
-    except Exception as e:
-        cursor.close()
-        return None
-
 # Retrieve all employees
 @app.route('/getEmpleados', methods=['GET'])
 def getEmpleados():
     cur = mysql.connection.cursor()
-    cur.execute('SELECT Empleados.id, Empleados.Email, Empleados.Nombres, Empleados.Apellidos, Empleados.Telefono, Empleados.Id_Puesto, Puestos.Descripcion as Puesto, Empleados.Salario, Empleados.Usuario, Empleados.Imagen, FROM dbRestaurantes.Empleados INNER JOIN dbRestaurantes.Puestos ON Puestos.Id=Empleados.Id_Puesto')
+    query = """
+        SELECT Empleados.id, Empleados.Email, Empleados.Nombres, Empleados.Apellidos, 
+		Empleados.Telefono, Empleados.Id_Puesto, Puestos.Descripcion as Puesto, 
+        Empleados.Salario, Usuario.Usuario, Empleados.Imagen
+        FROM dbRestaurantes.Empleados 
+        INNER JOIN dbRestaurantes.Puestos ON Puestos.Id=Empleados.Id_Puesto
+        INNER JOIN dbRestaurantes.Usuario ON Usuario.id_user=Empleados.id
+    """
+    cur.execute(query)
     rows = cur.fetchall()
     cur.close()
     empleados = []
@@ -400,13 +427,17 @@ def getEmpleados():
 @app.route('/newEmpleado', methods=['POST'])
 def newEmpleado():
     data = request.json
-    password = generate_password(data['nombres'] + data["apellidos"])
 
-    nombreImagen = data["nombres"] + data["apellidos"] + data["email"]
-    tipoImagen = 0
-    id_imagen = save_image(nombreImagen, data["image"], tipoImagen)
-    if id_imagen is None :
-        return jsonify({'error': "No ha sido posible guardar la imagen"}), 500
+    email = data["email"]
+    email = email.upper()
+    password = generate_password_hash(email)
+
+    nombreImagen = data["nombres"] + data["apellidos"] + data["usuario"] + "." + data["mimetype"]
+    
+    if not upload_file(data["image"], nombreImagen):
+        return jsonify({'error': "No fue posible guardar la imagen"}), 500
+
+
     # Generate password from the employee's name
 
     cursor = mysql.connection.cursor()

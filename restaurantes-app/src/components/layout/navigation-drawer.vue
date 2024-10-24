@@ -35,7 +35,7 @@
         <v-list-item prepend-icon="mdi-tag-multiple" title="Promos" value="promos" to="/promos"></v-list-item>
         <v-list-item prepend-icon="mdi-calendar-month" title="Reservar" value="reservar"></v-list-item>
         <v-list-item prepend-icon="mdi-motorbike" title="Domicilio" value="domicilio"></v-list-item>
-        <v-list-item prepend-icon="mdi-tools" title="Mantenimientos" value="mantenimientos" to="/maintenances"></v-list-item>
+        <v-list-item prepend-icon="mdi-tools" title="Mantenimientos" value="mantenimientos" to="/maintenances" v-if="isAuthenticated"></v-list-item>
       </v-list>
     </v-navigation-drawer>
   </template>
@@ -47,5 +47,14 @@
           rail: true,
         }
       },
+      computed: {
+          // Verifica si el token está almacenado en localStorage
+          isAuthenticated() {
+              return !!localStorage.getItem('token');
+          },
+          isAuthenticated() {
+              return localStorage.getItem('tipoUser') == 0;
+          }
+      }
     }
   </script>

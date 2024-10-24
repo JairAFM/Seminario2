@@ -73,6 +73,7 @@ export default {
     const url = this.baseUrl + "getCategories";
     try {
       const response = await fetch(url);
+      console.log(response);
       if (!response.ok) {
         Swal.fire({
           title: '¡Ha ocurrido un error!',
