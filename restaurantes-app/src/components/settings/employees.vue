@@ -108,16 +108,16 @@
       return {
         baseUrl: 'http://127.0.0.1:5000/',
         headers: [
-          { text: '', value: 'id_imagen' },
-          { text: 'ID', value: 'id' },
-          { text: 'Email', value: 'email' },
-          { text: 'Nombres', value: 'nombres' },
-          { text: 'Apellidos', value: 'apellidos' },
-          { text: 'Telefono', value: 'telefono' },
-          { text: 'Puesto', value: 'puesto' },
-          { text: 'Salario', value: 'salario' },
-          { text: 'Usuario', value: 'usuario' },
-          { text: 'Acciones', value: 'actions', align: 'center', sortable: false }
+          { title: '', key: 'id_imagen' },
+          { title: 'ID', key: 'id' },
+          { title: 'Email', key: 'email' },
+          { title: 'Nombres', key: 'nombres' },
+          { title: 'Apellidos', key: 'apellidos' },
+          { title: 'Telefono', key: 'telefono' },
+          { title: 'Puesto', key: 'puesto' },
+          { title: 'Salario', key: 'salario' },
+          { title: 'Usuario', key: 'usuario' },
+          { title: 'Acciones', key: 'actions', align: 'center', sortable: false }
         ],
         empleados: [],
         dialog: false,
@@ -143,8 +143,8 @@
     methods: {
       onFileChange(event) {
         const file = event.target.files[0];
-        this.form.mimetype = file.type.split('/')[1];
         if (file) {
+          this.form.mimetype = file.type.split('/')[1];
           const reader = new FileReader();
           reader.onloadend = () => {
             this.form.image = reader.result.split(',')[1];

@@ -35,12 +35,22 @@ def uploaded_file(filename):
     """
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-def upload_file(image_base64, filename):
+@app.route('/upload_menu/<filename>', methods=['GET'])
+def uploaded_menu(filename):
+    """
+    Sirve las imágenes guardadas en la carpeta uploads.
+    """
+    return send_from_directory(app.config['UPLOAD_FOLDER']+'menus/', filename)
+
+
+def upload_file(image_base64, filename, menu = False):
     
     # Verifica si es una extensión permitida
     try:
         image_data = base64.b64decode(image_base64)
         file_path = os.path.join(UPLOAD_FOLDER, filename)
+        if menu:
+            file_path = os.path.join(UPLOAD_FOLDER + 'menus/', filename)
         
         with open(file_path, 'wb') as image_file:
             image_file.write(image_data)
@@ -625,7 +635,7 @@ def deleteMesa(id):
 @app.route('/menu', methods=['GET'])
 def get_menu_items():
     cur = mysql.connection.cursor()
-    cur.execute('SELECT Menu.Id, Menu.Titulo, Menu.Descripcion, Menu.Precio, Menu.Id_Categoria, Categoria.descripcion as categoria, promocion FROM dbRestaurantes.Menu INNER JOIN dbRestaurantes.Categoria ON Categoria.Id = Menu.Id_Categoria')
+    cur.execute('SELECT Menu.Id, Menu.Titulo, Menu.Descripcion, Menu.Precio, Menu.Id_Categoria, Categoria.descripcion as categoria, promocion, precio_promo, fechaIni_promo, fechaFin_promo, imagenes FROM dbRestaurantes.Menu INNER JOIN dbRestaurantes.Categoria ON Categoria.Id = Menu.Id_Categoria')
     rows = cur.fetchall()
     cur.close()
 
@@ -639,6 +649,10 @@ def get_menu_items():
             "Id_Categoria": row[4],
             "Categoria": row[5],
             "Promo": row[6],
+            "Precio_Promo": row[7],
+            "FechaIni_Promo": row[8],
+            "FechaFin_Promo": row[9],
+            "Imagenes": row[10],
         }
         platillos.append(platillo)
 
@@ -647,22 +661,42 @@ def get_menu_items():
 @app.route('/menu', methods=['POST'])
 def add_menu_item():
     data = request.json
-    cursor = mysql.connection.cursor()
 
-    query = """
-    INSERT INTO Menu (Titulo, Descripcion, Precio, Id_Categoria, promocion)
-    VALUES (%s, %s, %s, %s, %s)
+    imagenes = json.loads(data["image"])
+    imagenesGuardadas = []
+
+    for img in imagenes:
+        subirImagen = upload_file(img["image"], img["name"], True)
+        if not subirImagen["success"]:
+            return jsonify({'error': "No fue posible guardar la imagen" + subirImagen["message"]}), 500
+        else:
+            imagenesGuardadas.append(img["name"])
+
+    insert_query = """
+    INSERT INTO Menu 
+        (Titulo, Descripcion, Precio, Id_Categoria, promocion, precio_promo, fechaIni_promo, fechaFin_promo, imagenes, FechaCreacion, FechaActualizacion) 
+    VALUES 
+        (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
+    now = datetime.now()
+
     values = (
         data['Titulo'],
         data['Descripcion'],
         data['Precio'],
         data['Id_Categoria'],
-        data['promo']
+        data['promo'],
+        data['precio_promo'],
+        data['inicio_promo'],
+        data['fin_promo'],
+        json.dumps(imagenesGuardadas),
+        now,
+        now
     )
 
     try:
-        cursor.execute(query, values)
+        cursor = mysql.connection.cursor()
+        cursor.execute(insert_query, values)
         mysql.connection.commit()
         cursor.close()
         return jsonify({'message': 'Platillo agregado exitosamente'}), 200
@@ -673,23 +707,99 @@ def add_menu_item():
 @app.route('/menu/<int:id>', methods=['PUT'])
 def update_menu_item(id):
     data = request.json
-    cursor = mysql.connection.cursor()
 
+    imagenes = json.loads(data["image"])
+    imagenesGuardadas = []
+
+    for img in imagenes:
+        subirImagen = upload_file(img["image"], img["name"], True)
+        if not subirImagen["success"]:
+            return jsonify({'error': "No fue posible guardar la imagen" + subirImagen["message"]}), 500
+        else:
+            imagenesGuardadas.append(img["name"])
+    now = datetime.now()
     query = """
     UPDATE Menu 
-    SET Titulo = %s, Descripcion = %s, Precio = %s, Id_Categoria = %s, FechaActualizacion = %s 
-    WHERE Id = %s
+        SET Titulo = %s,
+            Descripcion = %s,
+            Precio = %s,
+            promocion = %s,
+            precio_promo = %s,
+            fechaIni_promo = %s,
+            fechaFin_promo = %s,
+            FechaActualizacion = %s
+        WHERE Id = %s
     """
     values = (
         data['Titulo'],
         data['Descripcion'],
         data['Precio'],
-        data['Id_Categoria'],
-        datetime.now(),
-        id
+        data['promo'],
+        data['precio_promo'],
+        data['inicio_promo'],
+        data['fin_promo'],
+        now,
+        id,
     )
 
+    if 'Id_Categoria' in data:
+        query = """
+        UPDATE Menu 
+            SET Titulo = %s,
+                Descripcion = %s,
+                Precio = %s,
+                Id_Categoria = %s,
+                promocion = %s,
+                precio_promo = %s,
+                fechaIni_promo = %s,
+                fechaFin_promo = %s,
+                FechaActualizacion = %s
+            WHERE Id = %s
+        """
+        values = (
+            data['Titulo'],
+            data['Descripcion'],
+            data['Precio'],
+            data['Id_Categoria'],
+            data['promo'],
+            data['precio_promo'],
+            data['inicio_promo'],
+            data['fin_promo'],
+            now,
+            id,
+        )
+
+    if imagenesGuardadas:
+        query = """
+        UPDATE Menu 
+            SET Titulo = %s,
+                Descripcion = %s,
+                Precio = %s,
+                Id_Categoria = %s,
+                promocion = %s,
+                precio_promo = %s,
+                fechaIni_promo = %s,
+                fechaFin_promo = %s,
+                imagenes = %s,
+                FechaActualizacion = %s
+            WHERE Id = %s
+        """
+        values = (
+            data['Titulo'],
+            data['Descripcion'],
+            data['Precio'],
+            data['Id_Categoria'],
+            data['promo'],
+            data['precio_promo'],
+            data['inicio_promo'],
+            data['fin_promo'],
+            json.dumps(imagenesGuardadas),
+            now,
+            id,
+        )
+
     try:
+        cursor = mysql.connection.cursor()
         cursor.execute(query, values)
         mysql.connection.commit()
         cursor.close()
