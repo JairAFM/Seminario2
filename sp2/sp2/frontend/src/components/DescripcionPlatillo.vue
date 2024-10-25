@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <h1>Imágenes de Platillos Precargadas</h1>
+    <h1>Imágenes con Descripcion</h1>
 
     <!-- Sección para cada imagen precargada -->
     <div v-for="(image, index) in images" :key="index" class="image-upload">
@@ -17,7 +17,7 @@
       <!-- Botón que cambia según el contenido del cuadro de texto -->
       <div class="button-group">
         <button v-if="image.description" @click="saveDescription(index)">Guardar</button>
-        <button v-else @click="uploadImage(index)">Analizar</button>
+        <button v-else @click="uploadImage(index)">Generar Descripción</button>
       </div>
       
     </div>
