@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "lateral-boulder-439501-f1",
+  "private_key_id": "014fb3e367c0e62e7a5ad785b5dac3b42706e4df",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCw/eGXIpvoNhlQ\nuzFyQuLxA/2Fsmlu1GIgRjQS+DC5PqmzUPg7Wi8NHb8e3guJydYhXOyrKDvCwWkx\n5DnlzX1ritAM7aW43sCJPUqEvFWnF9gl2PRTlxRmoa2RAkVG6/0kpzxm07Y2blAp\nioYyBmebd9GazmXJ4EYypJLJeFnlTUpWUBmsQurawxX3Pur6RshzxQvCUxD0IjC+\nCuYZtUfloe2oQI+nFt4QlB2Eke484I1YYL27zQGgRtCyd8e00bYZs10ldmDOblkm\npOY8LdP/WDE53qZ4tzWNm5yihci1Wls0CSOZn7zEkj+P589Ma0bSTaay1O1XPvm7\nT0m92EVRAgMBAAECggEACYWTDBw0yoSUjpMPiS/fgStfiYCMawW6hLV6KjYXevPL\n0eWOgTTsGJbL2CeGc+J7pl5XLisTMfpRRDmcwsfwEifM4xEq6/vx3EBDoMn4Cq39\n9yVJmbCkTJQwn/9BBlx+SSlFFtwXbqy3G9EDwK+3BbZnvJ4TfE2YQTO44OVcYrlT\nmev+8P5tGkHO/7VGQ4TjQNw3khbRDStucz2V+QAnJ9j8QXmn9H9yxCgKrydhWrff\nHH3pymCOG/J5EytzzUEJKusOyx1GTlJiCJ2IBqfpsybxSBLFfdU6YNHtRN8oExvN\neXwg7z6ttFzAdtTkqcRXYceMLBTOAYYYhqiTW1bHRQKBgQDV2QHidqI4js8Umcmp\nG21ZWOwuOLA2DhBrgNGzlb2hmowgXiGSHIhviQmGGcyIzzqobjsvRbF0PM44fX9O\n1xE7IaYHBSk3Sewzas09MEoIieEJwV38TQxdGiTFNs8CWh6DRsPnZnDPqQaRb7lp\nQyL+Y3qg9vRBCdu7J4hjn4CuRQKBgQDT4RS4MxPwBNbjijORELPNjP13FS4XEvqn\ncF+lcuCH0NaWrCrUpsDyvgMGRrv+J0q/E8k2zTaCXro2ibPzJHK9hKR0vIOWkZ5i\nb0o+pJvCYMegp0bhtWiAjgRQIQ879pIdWyygbV714+mTZlA8DovQ+54cwnfyZndx\ntir9JEShnQKBgG1VZQxHAUuPYDq1IhCO0EqFF0POgfExIZ4FH7IElg6guJH37owI\ngI0d8DuaxyMPaHsi2KmjpUW7rOfe6g8CEHI+Eue18MuuxM/JBCQLo15YODFHpujO\n78pOCoy2KAKY1s7hiFmv22+giJYlHBPAWozbiZ/wgxMZmjlGzgm5TA5NAoGBAK9/\npDXeuQj6OTRH6OajuwrrWZcliAO8yLmgLtlQCgL1TImJGgECDpgCI2czd8vQp+0V\nanlmCVx7MiqybMdczV2FXOMEssoo29QU8p5ookui9jdv1xpltKWm/JOSjpfQaL7A\nInrPnPR3T6Wz/YmBUvZLNHAF9Gxny0/44CrFu8NRAoGAZQM92zRifukn6jgFnSO/\nrbga2oEzoCQtYTSz6tSHLcz+AF/rzpLWBj+RrjpNkcziut49s2Y8ZIL9V0XTWefM\nbC74Pc5yZMjvAo61dWj9Xs6ObArh8KMEuloIlFjk3xujG8O7FD6pu59BUvwSsx5M\nS3xPdammjGubGdwm3080AEU=\n-----END PRIVATE KEY-----\n",
+  "client_email": "seminario-proyecto@lateral-boulder-439501-f1.iam.gserviceaccount.com",
+  "client_id": "111692314740518917168",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/seminario-proyecto%40lateral-boulder-439501-f1.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

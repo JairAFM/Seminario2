@@ -831,7 +831,7 @@ def delete_menu_item(id):
 @app.route('/getPromos', methods=['GET'])
 def getPromos():
     cur = mysql.connection.cursor()
-    cur.execute('SELECT Menu.Id, Menu.Titulo, Menu.Descripcion, Menu.Precio, Menu.Id_Categoria, Categoria.descripcion as categoria, promocion, precio_promo, fechaIni_promo, fechaFin_promo, imagenes FROM dbRestaurantes.Menu INNER JOIN dbRestaurantes.Categoria ON Categoria.Id = Menu.Id_Categoria where promocion = 1')
+    cur.execute('SELECT Menu.Id, Menu.Titulo, Menu.Descripcion, Menu.Precio, Menu.Id_Categoria, Categoria.descripcion as categoria, promocion, precio_promo, fechaIni_promo, fechaFin_promo, imagenes FROM dbRestaurantes.Menu INNER JOIN dbRestaurantes.Categoria ON Categoria.Id = Menu.Id_Categoria where promocion = 1 and sysdate() <= fechaFin_promo')
     rows = cur.fetchall()
     cur.close()
 

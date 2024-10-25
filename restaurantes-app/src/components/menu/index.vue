@@ -125,8 +125,9 @@ export default {
           el.Imagenes = JSON.parse(el.Imagenes);
         });
         this.promotionalMenus = json;
-        console.log(this.promotionalMenus);
-        this.verPromos = true;
+        if (this.promotionalMenus.length > 0) {
+          this.verPromos = true;
+        }
       } catch (error) {
           Swal.fire({
             title: '¡Ha ocurrido un error!',

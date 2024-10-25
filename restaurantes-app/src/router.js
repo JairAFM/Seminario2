@@ -13,6 +13,12 @@ import Tables from './components/settings/tables.vue'
 import Menu from './components/settings/menuRest.vue'
 import menuCategory from './components/menu/categoriaComida.vue'
 
+import ReservationPlane from './components/components_reserva/ReservationPlane.vue'; 
+import ReservationForm from './components/components_reserva/ReservationForm.vue'; 
+import FotoForm from './components/components_reserva/PanoramaViewer.vue'; 
+import ReservationDetails from './components/components_reserva/ReservationDetails.vue';
+import DescripcionPlatillo from './components/components_reserva/DescripcionPlatillo.vue';
+
 const routes = [
     { 
         path: '/', 
@@ -75,7 +81,35 @@ const routes = [
         path: '/categoria/:categoria',
         name: 'nuestro Menu',
         component: menuCategory,
-    }
+    },
+
+
+
+    {
+        path: '/reservation',
+        name: 'Home',
+        component: ReservationPlane, 
+      },
+      {
+        path: '/reservation/reserve',
+        name: 'Reserve',
+        component: ReservationForm, 
+      },
+      {
+        path: '/reservation/fotos',
+        name: 'Foto',
+        component: FotoForm,
+      },
+      {
+        path: '/reservation/reservation-details/:id', 
+          component: ReservationDetails,
+          name: 'reservation-details',
+      },
+      {
+        path: '/reservation/descripcion',
+          component: DescripcionPlatillo,
+          name: 'descripcion-platillo',
+      },
 ]
 
 const router = createRouter({

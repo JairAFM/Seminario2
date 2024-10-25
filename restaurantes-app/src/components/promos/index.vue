@@ -1,17 +1,6 @@
 <template>
     <v-app>
       <!-- Barra lateral con categorías de comida -->
-      <v-navigation-drawer>
-        <v-list lines="one">
-          <v-list-group active-class="v-item--active">
-            <template v-for="category in categories" :key="category.Id">
-              <v-list-item @click="filterPromotions(category.id)">
-                  <v-list-item-title>{{ category.description }}</v-list-item-title>
-              </v-list-item>
-            </template>
-          </v-list-group>
-        </v-list>
-      </v-navigation-drawer>
   
       <!-- Encabezado -->
       <v-app-bar app color="red darken-2" dark>
@@ -21,7 +10,16 @@
       <!-- Contenido principal con las promociones -->
       <v-main>
         <v-container fluid>
-          <v-row class="mt-5 d-flex justify-center">
+        <v-list lines="one" v-if="false">
+          <v-list-group active-class="v-item--active">
+            <template v-for="category in categories" :key="category.Id">
+              <v-list-item @click="filterPromotions(category.id)">
+                  <v-list-item-title>{{ category.description }}</v-list-item-title>
+              </v-list-item>
+            </template>
+          </v-list-group>
+        </v-list>
+          <v-row class="mt-5 d-flex justify-center" v-if="verPromos">
                 <v-col cols="12" md="3" v-for="formMenu in promotionalMenus" :key="formMenu.Id">
                     <v-card>
                     <v-carousel
@@ -59,6 +57,9 @@
                     </v-card>
                 </v-col>
             </v-row>
+            <v-row class="mt-5 d-flex justify-center" v-else>
+            <h2 class="promo-title">No tenemos promociones disponibles por el momento</h2>
+        </v-row>
         </v-container>
       </v-main>
     </v-app>
@@ -74,10 +75,12 @@
         promotionalMenus: [],
         filteredPromotions: [],
         categories: [],
+        verPromos: false,
       };
     },
     mounted() {
       this.getPromos();// Mostrar todas las promociones inicialmente
+      this.getCategories();
     },
     methods: {
       formatDate(dateString) {
@@ -151,6 +154,9 @@
           });
           this.promotionalMenus = json;
           this.filteredPromotions = this.promotionalMenus; 
+          if (this.promotionalMenus.length > 0) {
+            this.verPromos = true;
+          }
         } catch (error) {
             Swal.fire({
               title: '¡Ha ocurrido un error!',
