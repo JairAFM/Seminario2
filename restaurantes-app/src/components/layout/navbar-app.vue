@@ -63,7 +63,7 @@
                                             class="mb-2"
                                             v-model="email"
                                             :rules="emailRules"
-                                            label="Correo Electrónico"
+                                            label="Correo Electrónico o Usuario"
                                             variant="outlined"
                                             required
                                             clearable
@@ -123,11 +123,7 @@
             emailRules: [
                 value => {
                     if (value) return true
-                    return 'El correo electrónico es requerido.'
-                },
-                value => {
-                    if (/.+@.+\..+/.test(value)) return true
-                    return 'El correo electrónico es inválido.'
+                    return 'El correo electrónico o usuario es requerido.'
                 },
             ],
             password: null,

@@ -8,11 +8,12 @@ import os
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import JWTManager, create_access_token
+import base64
 
 app = Flask(__name__)
 
 #folder donde se guardaran las imagenes
-UPLOAD_FOLDER = 'assets/uploads/'
+UPLOAD_FOLDER = 'static/uploads/'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -27,6 +28,13 @@ mysql = MySQL(app)
 app.config['JWT_SECRET_KEY'] = 'seminarioFinal2'
 jwt = JWTManager(app)
 
+@app.route('/uploads/<filename>', methods=['GET'])
+def uploaded_file(filename):
+    """
+    Sirve las imágenes guardadas en la carpeta uploads.
+    """
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
 def upload_file(image_base64, filename):
     
     # Verifica si es una extensión permitida
@@ -36,11 +44,9 @@ def upload_file(image_base64, filename):
         
         with open(file_path, 'wb') as image_file:
             image_file.write(image_data)
-        return True
+        return {'success': True, 'message': ''}
     except Exception as e:
-        return  False
-    
-    return False
+        return {'success': False, 'message': str(e)}
 
 #validar inicio de sesion 
 @app.route('/login', methods=['POST'])
@@ -401,7 +407,7 @@ def getEmpleados():
         Empleados.Salario, Usuario.Usuario, Empleados.Imagen
         FROM dbRestaurantes.Empleados 
         INNER JOIN dbRestaurantes.Puestos ON Puestos.Id=Empleados.Id_Puesto
-        INNER JOIN dbRestaurantes.Usuario ON Usuario.id_user=Empleados.id
+        INNER JOIN dbRestaurantes.Usuario ON Usuario.id_user=Empleados.id and Usuario.Tipo_User = 0
     """
     cur.execute(query)
     rows = cur.fetchall()
@@ -418,7 +424,7 @@ def getEmpleados():
             "puesto": row[6],
             "salario": row[7],
             "usuario": row[8],
-            "id_imagen": row[10],
+            "id_imagen": row[9],
         }
         empleados.append(empleado)
     return jsonify(empleados)
@@ -428,25 +434,37 @@ def getEmpleados():
 def newEmpleado():
     data = request.json
 
-    email = data["email"]
-    email = email.upper()
-    password = generate_password_hash(email)
-
-    nombreImagen = data["nombres"] + data["apellidos"] + data["usuario"] + "." + data["mimetype"]
-    
-    if not upload_file(data["image"], nombreImagen):
-        return jsonify({'error': "No fue posible guardar la imagen"}), 500
-
-
-    # Generate password from the employee's name
+    user_pass = data["usuario"]
+    user_pass = user_pass.upper()
 
     cursor = mysql.connection.cursor()
 
+    query = "Select 1 from dbrestaurantes.usuario where usuario = %s"
+    try: 
+        cursor.execute(query, (user_pass,))
+        result = cursor.fetchone()
+        if result:
+            return jsonify({'error': "El usuario ya existe"}), 500
+    except Exception as e:
+        cursor.close()
+        return jsonify({'error': str(e)}), 500
+
+    password = generate_password_hash(user_pass)
+
+    nombreImagen = data["nombres"] + data["apellidos"] + user_pass + "." + data["mimetype"]
+    
+    subirImagen = upload_file(data["image"], nombreImagen)
+    if not subirImagen["success"]:
+        return jsonify({'error': "No fue posible guardar la imagen" + subirImagen["message"]}), 500
+
+
     query = """ 
     INSERT INTO Empleados 
-    (Email, Nombres, Apellidos, Telefono, Id_Puesto, Salario, Usuario, Password, Id_Imagen, FechaCreacion, FechaActualizacion)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    (Email, Nombres, Apellidos, Telefono, Id_Puesto, Salario, imagen, FechaCreacion, FechaActualizacion)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
+    
+    now = datetime.now()
     values = (
         data['email'],
         data['nombres'],
@@ -454,15 +472,28 @@ def newEmpleado():
         data['telefono'],
         data['puesto'],
         data['salario'],
-        data['usuario'],
-        password,  # Use the generated password
-        id_imagen,  # Image ID from the previous image save
-        datetime.now(),
-        datetime.now()
+        nombreImagen,  # Image ID from the previous image save
+        now,
+        now
     )
 
     try:
-        cursor.execute(query, values)
+        cur = mysql.connection.cursor()
+        cur.execute(query, values)
+        idEmployee = cur.lastrowid
+        values_user = (
+                user_pass,
+                password,
+                idEmployee,
+                0
+            )
+        # Inserta el usuario en la tabla Usuario
+        query_usuario = """
+        INSERT INTO Usuario (Usuario, Password, id_user, Tipo_user)
+        VALUES (%s, %s, %s, %s)
+        """
+        cur.execute(query_usuario, values_user)
+        
         mysql.connection.commit()
         cursor.close()
         return jsonify({'message': 'Empleado creado exitosamente'}), 200
@@ -474,27 +505,31 @@ def newEmpleado():
 @app.route('/editEmpleado/<int:id>', methods=['PUT'])
 def editEmpleado(id):
     data = request.json
-    cursor = mysql.connection.cursor()
 
+    nombreImagen = data["nombres"] + data["apellidos"] + data["usuario"] + "." + data["mimetype"]
+    
+    subirImagen = upload_file(data["image"], nombreImagen)
+    if not subirImagen["success"]:
+        return jsonify({'error': "No fue posible guardar la imagen" + subirImagen["message"]}), 500
+    
     query = """ 
     UPDATE dbRestaurantes.Empleados 
-    SET Email = %s, Nombres = %s, Apellidos = %s, Telefono = %s, Id_Puesto = %s, Salario = %s, Usuario = %s, Password = %s, Id_Imagen = %s, FechaActualizacion = %s 
+    SET Email = %s, Nombres = %s, Apellidos = %s, Telefono = %s, Id_Puesto = %s, Salario = %s, imagen = %s, FechaActualizacion = %s 
     WHERE Id = %s
     """
     values = (
         data['email'],
         data['nombres'],
         data['apellidos'],
-        data.get('telefono', None),
-        data.get('id_puesto', None),
+        data['telefono'],
+        data['id_puesto'],
         data['salario'],
-        data['usuario'],
-        data['password'],
-        data.get('id_imagen', None),
+        nombreImagen,
         datetime.now(),
         id
     )
     try:
+        cursor = mysql.connection.cursor()
         cursor.execute(query, values)
         mysql.connection.commit()
         cursor.close()
@@ -504,14 +539,19 @@ def editEmpleado(id):
         return jsonify({'error': str(e)}), 500
 
 # Delete an employee by ID
-@app.route('/deleteEmpleado/<int:id>', methods=['DELETE'])
-def deleteEmpleado(id):
+@app.route('/deleteEmpleado/<int:id>/<string:usuario>', methods=['DELETE'])
+def deleteEmpleado(id, usuario):
     cursor = mysql.connection.cursor()
     query = """ 
     DELETE FROM dbRestaurantes.Empleados 
     WHERE Id = %s
     """
+    query_user = """ 
+    DELETE FROM dbRestaurantes.Usuario 
+    WHERE usuario = %s
+    """
     try:
+        cursor.execute(query_user, (usuario,))
         cursor.execute(query, (id,))
         mysql.connection.commit()
         cursor.close()

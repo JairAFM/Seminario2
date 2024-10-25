@@ -85,7 +85,7 @@ router.beforeEach((to, from, next) => {
     // Si la ruta requiere autenticación y no hay token, redirige al login
     if (to.matched.some(record => record.meta.requiresAuth) && !token) {
       next('/');
-    } else if (to.matched.some(record => record.meta.requiresPermission) && tipoUser !== 0) {
+    } else if (to.matched.some(record => record.meta.requiresPermission) && tipoUser !== '0') {
       next('/');
     } else {
       next();  // Si hay token o la ruta no requiere autenticación, permite el acceso
