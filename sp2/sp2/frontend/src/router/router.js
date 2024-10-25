@@ -3,26 +3,32 @@ import ReservationPlane from '../components/ReservationPlane.vue';
 import ReservationForm from '../components/ReservationForm.vue'; 
 import FotoForm from '../components/PanoramaViewer.vue'; 
 import ReservationDetails from '../components/ReservationDetails.vue';
+import DescripcionPlatillo from '../components/DescripcionPlatillo.vue';
 const routes = [
   {
     path: '/',
     name: 'Home',
-    component: ReservationPlane, // Muestra ReservationPlane en la raíz
+    component: ReservationPlane, 
   },
   {
     path: '/reserve',
     name: 'Reserve',
-    component: ReservationForm, // Asegúrate de que esta ruta tenga el componente correcto
+    component: ReservationForm, 
   },
   {
     path: '/fotos',
     name: 'Foto',
-    component: FotoForm, // Asegúrate de que esta ruta tenga el componente correcto
+    component: FotoForm,
   },
   {
-    path: '/reservation-details/:id', // Usar :id para capturar el ID en la ruta
+    path: '/reservation-details/:id', 
       component: ReservationDetails,
       name: 'reservation-details',
+  },
+  {
+    path: '/descripcion',
+      component: DescripcionPlatillo,
+      name: 'descripcion-platillo',
   },
 ];
 
