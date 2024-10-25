@@ -828,6 +828,55 @@ def delete_menu_item(id):
         cursor.close()
         return jsonify({'error': str(e)}), 500
 
+@app.route('/getPromos', methods=['GET'])
+def getPromos():
+    cur = mysql.connection.cursor()
+    cur.execute('SELECT Menu.Id, Menu.Titulo, Menu.Descripcion, Menu.Precio, Menu.Id_Categoria, Categoria.descripcion as categoria, promocion, precio_promo, fechaIni_promo, fechaFin_promo, imagenes FROM dbRestaurantes.Menu INNER JOIN dbRestaurantes.Categoria ON Categoria.Id = Menu.Id_Categoria where promocion = 1')
+    rows = cur.fetchall()
+    cur.close()
+
+    platillos = []
+    for row in rows:
+        platillo = {
+            "Id": row[0],
+            "Titulo": row[1],
+            "Descripcion": row[2],
+            "Precio": row[3],
+            "Id_Categoria": row[4],
+            "Categoria": row[5],
+            "Promo": row[6],
+            "Precio_Promo": row[7],
+            "FechaIni_Promo": row[8],
+            "FechaFin_Promo": row[9],
+            "Imagenes": row[10],
+        }
+        platillos.append(platillo)
+
+    return jsonify(platillos), 200
+
+@app.route('/getPlatillosCat/<int:id>', methods=['GET'])
+def getPlatillosCat(id):
+    cur = mysql.connection.cursor()
+    cur.execute('SELECT Menu.Id, Menu.Titulo, Menu.Descripcion, Menu.Precio, Menu.Id_Categoria, Categoria.descripcion as categoria, promocion, precio_promo, fechaIni_promo,fechaFin_promo, imagenes FROM dbRestaurantes.Menu INNER JOIN dbRestaurantes.Categoria ON Categoria.Id = Menu.Id_Categoria where Categoria.Id = %s', (id,))
+    rows = cur.fetchall()
+    cur.close()
+    platillos = []
+    for row in rows:
+        platillo = {
+            "Id": row[0],
+            "Titulo": row[1],
+            "Descripcion": row[2],
+            "Precio": row[3],
+            "Id_Categoria": row[4],
+            "Categoria": row[5],
+            "Promo": row[6],
+            "Precio_Promo": row[7],
+            "FechaIni_Promo": row[8],
+            "FechaFin_Promo": row[9],
+            "Imagenes": row[10],
+        }
+        platillos.append(platillo)
+    return jsonify(platillos), 200
 
 
 

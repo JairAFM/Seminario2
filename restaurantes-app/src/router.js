@@ -11,6 +11,7 @@ import Status from './components/settings/status.vue'
 import Employees from './components/settings/employees.vue'
 import Tables from './components/settings/tables.vue'
 import Menu from './components/settings/menuRest.vue'
+import menuCategory from './components/menu/categoriaComida.vue'
 
 const routes = [
     { 
@@ -69,6 +70,11 @@ const routes = [
         name: 'Menu',
         meta: { requiresAuth: true, requiresPermission: true },
         component: Menu,
+    },
+    {
+        path: '/categoria/:categoria',
+        name: 'nuestro Menu',
+        component: menuCategory,
     }
 ]
 
@@ -79,6 +85,7 @@ const router = createRouter({
 
 // Verificación global antes de acceder a rutas protegidas
 router.beforeEach((to, from, next) => {
+    document.title = 'FindTable - ' + to.name;
     const token = localStorage.getItem('token');  // Obtener el token almacenado
     const tipoUser = localStorage.getItem('tipoUser'); // Obtener tipo de usuario
   
