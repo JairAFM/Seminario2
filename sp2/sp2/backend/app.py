@@ -1,11 +1,17 @@
-from flask import Flask, jsonify, request, send_from_directory  # Añadir send_from_directory
-
+from flask import Flask, jsonify, request, send_from_directory, render_template, url_for # Añadir send_from_directory
+from google.cloud import vision
 from flask_mysqldb import MySQL
 from flask_cors import CORS
 import os
+import cv2
+import qrcode
+import numpy as np
 
 app = Flask(__name__)
 CORS(app)
+
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "C:\\Users\\User\\Desktop\\prueba_chat\\lateral-boulder-439501-f1-014fb3e367c0.json"
+vision_client = vision.ImageAnnotatorClient()
 
 # Configuración de la conexión con la base de datos
 app.config['MYSQL_HOST'] = 'localhost'
@@ -110,6 +116,25 @@ def serve(path):
     else:
         return send_from_directory(app.static_folder, 'index.html')
 
+
+@app.route('/analyze', methods=['POST'])
+def analyze_image():
+    file = request.files['image']
+    content = file.read()
+
+    image = vision.Image(content=content)
+    response = vision_client.label_detection(image=image)
+    labels = response.label_annotations
+
+    labels_list = [label.description for label in labels]
+
+    if labels_list:
+        description = f"Este platillo está compuesto por: {', '.join(labels_list[:-1])}, y {labels_list[-1]}."
+    else:
+        description = "No se pudieron identificar ingredientes para este platillo."
+
+    return jsonify({'description': description})
+    
 if __name__ == '__main__':
     app.run(debug=True)
 
