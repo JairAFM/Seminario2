@@ -13,11 +13,11 @@ import Tables from './components/settings/tables.vue'
 import Menu from './components/settings/menuRest.vue'
 import menuCategory from './components/menu/categoriaComida.vue'
 
-import ReservationPlane from './components/components_reserva/ReservationPlane.vue'; 
-import ReservationForm from './components/components_reserva/ReservationForm.vue'; 
-import FotoForm from './components/components_reserva/PanoramaViewer.vue'; 
-import ReservationDetails from './components/components_reserva/ReservationDetails.vue';
-import DescripcionPlatillo from './components/components_reserva/DescripcionPlatillo.vue';
+import ReservationPlane from './components/comp_reserva/ReservationPlane.vue'; 
+import ReservationForm from './components/comp_reserva/ReservationForm.vue'; 
+import FotoForm from './components/comp_reserva/PanoramaViewer.vue'; 
+import ReservationDetails from './components/comp_reserva/ReservationDetails.vue';
+import DescripcionPlatillo from './components/comp_reserva/DescripcionPlatillo.vue';
 
 const routes = [
     { 

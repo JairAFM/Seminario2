@@ -10,6 +10,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import JWTManager, create_access_token
 import base64
 
+
+from google.cloud import vision
+import cv2
+import qrcode
+import numpy as np
+
+
 app = Flask(__name__)
 
 #folder donde se guardaran las imagenes
@@ -17,6 +24,9 @@ UPLOAD_FOLDER = 'static/uploads/'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 CORS(app, resources={r"/*": {"origins": "*"}})
+
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "lateral-boulder-439501-f1-014fb3e367c0.json"
+#vision_client = vision.ImageAnnotatorClient()
 
 #conexion con la base de datos 
 app.config['MYSQL_HOST'] = 'localhost'
