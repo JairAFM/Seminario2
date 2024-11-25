@@ -1,0 +1,6 @@
+npm install lodash
+npm install panolens
+npm install @mdi/font
+npm install interactjs
+npm install unplugin-fonts
+npm install axios 
