@@ -12,13 +12,7 @@
           <label for="start-time" class="form-label">Hora de Inicio:</label>
           <input type="time" id="start-time" v-model="reservation.startTime" class="form-control custom-input" required />
         </div>
-  
-        <!-- Campo de Hora Final -->
-        <div class="mb-3">
-          <label for="end-time" class="form-label">Hora Final:</label>
-          <input type="time" id="end-time" v-model="reservation.endTime" class="form-control custom-input" required />
-        </div>
-  
+    
         <div class="mb-3">
           <label for="guests" class="form-label">Número de Personas:</label>
           <select id="guests" v-model="guestCount" class="form-select custom-select" required>
