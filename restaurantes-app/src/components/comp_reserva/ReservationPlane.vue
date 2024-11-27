@@ -33,9 +33,13 @@
     </div>
     
     <modal v-if="selectedImage" @close="selectedImage = null">
-      <h3>{{ selectedImage.name }}</h3>
-      <button @click="reserve">Reservar</button>
-      <button @click="viewImage">Ver vista</button>
+      <div class="modal-content">
+        <h3>{{ selectedImage.name }}</h3>
+        <div class="modal-actions">
+          <button @click="reserve" class="btn-reserve">Reservar</button>
+          <button @click="viewImage" class="btn-view">Ver vista</button>
+        </div>
+      </div>
     </modal>
 
     <!-- Aquí se renderizará el contenido de las rutas -->
@@ -57,11 +61,11 @@ export default {
       usuario: 0, // Cambia el valor aquí según sea necesario
       images: [],
       externalImages: [
-        { id: 1, name: 'Imagen 1', src: "http://localhost:5000/static/imagen1.png", width: 50, height: 50 },
-        { id: 2, name: 'Imagen 2', src: "http://localhost:5000/static/imagen2.png", width: 50 },
-        { id: 3, name: 'Imagen 3', src: "http://localhost:5000/static/imagen3.png", width: 50 },
-        { id: 4, name: 'Imagen 4', src: "http://localhost:5000/static/imagen4.png", width: 50 },
-        { id: 5, name: 'Imagen 5', src: "http://localhost:5000/static/baños.png", width: 50 },
+        { id: 1, name: 'Imagen 1', src: "src/assets/images/imagen1.png", width: 50, height: 50 },
+        { id: 2, name: 'Imagen 2', src: "src/assets/images/imagen2.png", width: 50 },
+        { id: 3, name: 'Imagen 3', src: "src/assets/images/imagen3.png", width: 50 },
+        { id: 4, name: 'Imagen 4', src: "src/assets/images/imagen4.png", width: 50 },
+        { id: 5, name: 'Imagen 5', src: "src/assets/images/baños.png", width: 50 },
       ],
       selectedImage: null,
     };
@@ -137,7 +141,7 @@ export default {
     reserve() {
       // Aquí se debe enviar el número de mesa al formulario de reservación
       this.$router.push({ 
-        path: '/reserve',
+        path: '/resevarForm',
         query: { mesa: this.selectedImage.id } // Envía el ID de la imagen como número de mesa
       });
       this.selectedImage = null; // Cierra el modal
@@ -277,5 +281,65 @@ export default {
   position: absolute;
   top: 5px;
   right: 5px;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 400px; /* Tamaño máximo del modal */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Sombra suave */
+  text-align: center;
+}
+
+h3 {
+  color: #333;
+  font-size: 1.5em;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 20px;
+}
+
+button {
+  background-color: #4CAF50; /* Color verde para los botones */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  width: 45%;
+}
+
+button:hover {
+  background-color: #388E3C; /* Verde más oscuro al pasar el ratón */
+  transform: translateY(-2px); /* Efecto de elevación */
+}
+
+button:active {
+  transform: translateY(0); /* Mantener el efecto al hacer clic */
+}
+
+.btn-reserve {
+  background-color: #007BFF; /* Color azul para el botón de "Reservar" */
+}
+
+.btn-reserve:hover {
+  background-color: #0056b3; /* Azul más oscuro en hover */
+}
+
+.btn-view {
+  background-color: #FF5722; /* Color naranja para el botón de "Ver vista" */
+}
+
+.btn-view:hover {
+  background-color: #e64a19; /* Naranja más oscuro en hover */
 }
 </style>

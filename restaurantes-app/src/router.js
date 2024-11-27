@@ -82,25 +82,22 @@ const routes = [
         name: 'nuestro Menu',
         component: menuCategory,
     },
-
-
-
     {
         path: '/reservation',
         name: 'Home',
         component: ReservationPlane, 
       },
-      {
-        path: '/reservation/reserve',
+    {
+        path: '/resevarForm',
         name: 'Reserve',
         component: ReservationForm, 
       },
-      {
-        path: '/reservation/fotos',
+     {
+        path: '/fotos',
         name: 'Foto',
         component: FotoForm,
       },
-      {
+      /*{
         path: '/reservation/reservation-details/:id', 
           component: ReservationDetails,
           name: 'reservation-details',
@@ -109,7 +106,7 @@ const routes = [
         path: '/reservation/descripcion',
           component: DescripcionPlatillo,
           name: 'descripcion-platillo',
-      },
+      },*/
 ]
 
 const router = createRouter({

@@ -33,7 +33,7 @@
       <v-list density="compact" nav>
         <v-list-item prepend-icon="mdi-silverware-fork-knife" title="Menu" value="menu" to="/"></v-list-item>
         <v-list-item prepend-icon="mdi-tag-multiple" title="Promos" value="promos" to="/promos"></v-list-item>
-        <v-list-item prepend-icon="mdi-calendar-month" title="Reservar" value="reservar"></v-list-item>
+        <v-list-item prepend-icon="mdi-calendar-month" title="Reservar" value="reservar" to="/reservation"></v-list-item>
         <v-list-item prepend-icon="mdi-motorbike" title="Domicilio" value="domicilio"></v-list-item>
         <v-list-item prepend-icon="mdi-tools" title="Mantenimientos" value="mantenimientos" to="/maintenances" v-if="isAuthenticated"></v-list-item>
       </v-list>

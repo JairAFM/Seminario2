@@ -10,7 +10,7 @@
       const panoramaContainer = document.getElementById('panorama-container');
   
       // Crear un panorama con la imagen de tu servidor Flask
-      const panorama = new PANOLENS.ImagePanorama('http://localhost:5000/static/img/foto4.jpeg');
+      const panorama = new PANOLENS.ImagePanorama('src/assets/images/vistas/foto4.jpeg');
       const viewer = new PANOLENS.Viewer({ container: panoramaContainer });
   
       viewer.add(panorama);
