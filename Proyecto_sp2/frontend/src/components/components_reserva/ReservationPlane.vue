@@ -31,9 +31,14 @@
           <!-- Controles de edición -->
           <template v-if="isEditMode">
             <div class="resize-handle" @mousedown.stop="initResize($event, img)"></div>
-            <button class="delete-button" @click.stop="removeImage(img.id)">
-              <v-icon color="error">mdi-delete</v-icon>
-            </button>
+            <div class="button-container">
+              <button class="action-button delete-button" @click.stop="removeImage(img.id)">
+                <v-icon color="white">mdi-delete</v-icon>
+              </button>
+              <button class="action-button add-image-button" @click.stop="addImagen(img.id)">
+                <v-icon color="white">mdi-camera-plus</v-icon>
+              </button>
+            </div>
           </template>
           
           <!-- Indicador de mesa seleccionable -->
@@ -103,6 +108,7 @@
 <script>
 import interact from 'interactjs';
 import Modal from './ReservationModal.vue'; 
+import Swal from 'sweetalert2'
 
 export default {
   components: {
@@ -114,11 +120,11 @@ export default {
       usuario: 0, // Cambia el valor aquí según sea necesario
       images: [],
       externalImages: [
-        { id: 1, name: 'Imagen 1', src: "src/assets/images/imagen1.png", width: 50, height: 50 },
-        { id: 2, name: 'Imagen 2', src: "src/assets/images/imagen2.png", width: 50 },
-        { id: 3, name: 'Imagen 3', src: "src/assets/images/imagen3.png", width: 50 },
-        { id: 4, name: 'Imagen 4', src: "src/assets/images/imagen4.png", width: 50 },
-        { id: 5, name: 'Imagen 5', src: "src/assets/images/baños.png", width: 50 },
+        { id: 1, capacidad: 3, name: 'Imagen 1', src: "src/assets/images/imagen1.png", width: 50, height: 50 },
+        { id: 2, capacidad: 4, name: 'Imagen 2', src: "src/assets/images/imagen2.png", width: 50 },
+        { id: 3, capacidad: 6, name: 'Imagen 3', src: "src/assets/images/imagen3.png", width: 50 },
+        { id: 4, capacidad: 8, name: 'Imagen 4', src: "src/assets/images/imagen4.png", width: 50 },
+        { id: 5, capacidad: 0, name: 'Imagen 5', src: "src/assets/images/baños.png", width: 50 },
       ],
       selectedImage: null,
     };
@@ -134,7 +140,89 @@ export default {
       }
     },
 
-    toggleEditMode() {
+    async saveMesasToDatabase() {
+      try {
+        // Preparar los datos de las mesas
+        const mesasData = this.images.map(img => ({
+          id_mesa: img.id,
+          capacidad: img.capacidad || 0, // Si no tiene capacidad, ponemos 0
+          posicion_x: Math.round(parseFloat(img.x) || 0),
+          posicion_y: Math.round(parseFloat(img.y) || 0)
+        }));
+
+        // Llamada al backend para cada mesa
+        const promises = mesasData.map(mesa => 
+          fetch(`/editMesa/${mesa.id_mesa}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              capacidad: mesa.capacidad,
+              posicion_x: mesa.posicion_x,
+              posicion_y: mesa.posicion_y
+            })
+          })
+        );
+
+        // Esperar a que todas las actualizaciones terminen
+        const results = await Promise.all(promises);
+        
+        // Verificar si todas las operaciones fueron exitosas
+        const allSuccessful = results.every(response => response.ok);
+        
+        if (allSuccessful) {
+          console.log('Mesas guardadas exitosamente en la base de datos');
+          Swal.fire({
+            icon: 'success',
+            title: 'Éxito',
+            text: 'Las mesas se han guardado correctamente'
+          });
+        } else {
+          throw new Error('Algunas mesas no pudieron ser actualizadas');
+        }
+      } catch (error) {
+        console.error('Error al guardar las mesas:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'No se pudieron guardar las mesas en la base de datos'
+        });
+      }
+    },
+
+    async toggleEditMode() {
+      if (this.isEditMode) {  // Si estamos saliendo del modo edición
+        console.log("Posiciones finales de las mesas:");
+        this.images.forEach(img => {
+          const element = this.$refs.imageContainer.querySelector(`.draggable-image[data-id="${img.id}"]`);
+          if (element) {
+            const x = parseFloat(element.getAttribute('data-x')) || 0;
+            const y = parseFloat(element.getAttribute('data-y')) || 0;
+            
+            // Actualizar las coordenadas en el objeto de imagen
+            img.x = x;
+            img.y = y;
+            
+            console.log(`Mesa ${img.id}:`, {
+              nombre: img.name,
+              capacidad: img.capacidad,
+              posición: {
+                x: Math.round(x),
+                y: Math.round(y)
+              },
+              tamaño: {
+                ancho: img.width,
+                alto: img.height
+              }
+            });
+          }
+        });
+
+        // Guardar las mesas en la base de datos
+        await this.saveMesasToDatabase();
+      }
+      
       this.isEditMode = !this.isEditMode;
       this.saveState();
       this.initializeDragAndResize();
@@ -166,37 +254,30 @@ export default {
           },
         });
     },
-
     dragMoveListener(event) {
       const target = event.target;
-
-      // Mantiene la posición actual
       const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
       const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
 
-      // Traslada el elemento
       target.style.transform = `translate(${x}px, ${y}px)`;
-
-      // Actualiza la posición
       target.setAttribute('data-x', x);
       target.setAttribute('data-y', y);
 
-      // Actualiza las propiedades de la imagen
       const img = this.images.find(image => image.id == target.dataset.id);
       if (img) {
-        img.x = x; // Guardar la nueva posición x
-        img.y = y; // Guardar la nueva posición y
+        img.x = x;
+        img.y = y;
       }
 
-      this.saveState(); // Guardar estado cuando se mueva una imagen
+      this.saveState();
     },
 
     reserve() {
-      // Aquí se debe enviar el número de mesa al formulario de reservación
       this.$router.push({ 
         path: '/resevarForm',
         query: { mesa: this.selectedImage.id } // Envía el ID de la imagen como número de mesa
       });
+      console.log("id mesa " + this.selectedImage);
       this.selectedImage = null; // Cierra el modal
     },
     
@@ -208,24 +289,85 @@ export default {
     },
 
     duplicateImage(externalImg) {
+      // Obtener el contenedor de imágenes
+      const container = this.$refs.imageContainer;
+      const containerRect = container.getBoundingClientRect();
+      
+      // Calcular el centro del contenedor
+      const centerX = containerRect.width / 2 - 50;
+      const centerY = containerRect.height / 2 - 50;
+
       const newImg = {
         id: this.images.length + 1,
         name: externalImg.name,
         src: externalImg.src,
-        width: 100, // Tamaño inicial
+        width: 100,
         height: 100,
-        x: 0, // Establecer posición inicial
-        y: 0, // Establecer posición inicial
+        x: centerX,
+        y: centerY,
+        capacidad: externalImg.capacidad,
       };
+      
+      console.log(`Mesa ${newImg.id} colocada en - X: ${centerX}px, Y: ${centerY}px`);
+      
       this.images.push(newImg);
-      this.saveState(); // Guardar estado al duplicar una imagen
+      
+      // Esperar a que el DOM se actualice
+      this.$nextTick(() => {
+        const imgElement = this.$refs.imageContainer.querySelector(`.draggable-image[data-id="${newImg.id}"]`);
+        if (imgElement) {
+          imgElement.style.transform = `translate(${centerX}px, ${centerY}px)`;
+          imgElement.setAttribute('data-x', centerX);
+          imgElement.setAttribute('data-y', centerY);
+        }
+      });
+      
+      this.saveState();
     },
 
     removeImage(id) {
       this.images = this.images.filter(img => img.id !== id);
       this.saveState(); // Guardar estado al eliminar una imagen
     },
+    addImagen(id) {
+  try {
+    const result = Swal.fire({
+      title: "Select image",
+      input: "file",
+      inputAttributes: {
+        "accept": "image/*",
+        "aria-label": "Upload your profile picture"
+      }
+    });
 
+    console.log(result);
+    if (result.value) {
+      const file = result.value;
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        const fileUrl = e.target.result;
+        console.log("Ruta del archivo:", fileUrl);
+        
+        Swal.fire({
+          title: "Your uploaded picture",
+          imageUrl: fileUrl,
+          imageAlt: "The uploaded picture"
+        });
+      };
+
+      console.log("Nombre del archivo:", file.name);
+      console.log("Tipo de archivo:", file.type);
+      console.log("Tamaño del archivo:", file.size);
+
+      reader.readAsDataURL(file);
+    }
+    
+    console.log("id mesa:", id);
+  } catch (error) {
+    console.error("Error al cargar la imagen:", error);
+  }
+},
     resizeMove(event) {
       if (!this.isEditMode) return; // No hacer nada si no está en modo edición
 
@@ -270,8 +412,9 @@ export default {
           src: image.src,
           width: image.width,
           height: image.height,
-          x: parseFloat(image.x) || 0, // Guardar la posición x
-          y: parseFloat(image.y) || 0  // Guardar la posición y
+          x: parseFloat(image.x) || 0,
+          y: parseFloat(image.y) || 0,
+          capacidad: image.capacidad
         })),
       };
       localStorage.setItem('appState', JSON.stringify(state));
@@ -289,8 +432,9 @@ export default {
           src: image.src,
           width: image.width,
           height: image.height,
-          x: image.x, // Asegúrate de restaurar la posición x
-          y: image.y  // Asegúrate de restaurar la posición y
+          x: image.x,
+          y: image.y,
+          capacidad: image.capacidad
         }));
         this.$nextTick(() => {
           this.images.forEach((img) => {
@@ -442,26 +586,46 @@ export default {
   opacity: 1;
 }
 
-.delete-button {
+.button-container {
   position: absolute;
   top: 8px;
   right: 8px;
-  background-color: #ff5252;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 0.875rem;
+  display: flex;
+  gap: 8px;
   opacity: 0;
   transition: opacity 0.3s ease;
 }
 
-.draggable-image:hover .delete-button {
+.draggable-image:hover .button-container {
   opacity: 1;
+}
+
+.action-button {
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.action-button:hover {
+  transform: scale(1.1);
+}
+
+.delete-button {
+  background-color: #ff5252;
 }
 
 .delete-button:hover {
   background-color: #ff1744;
+}
+
+.add-image-button {
+  background-color: #2196F3;
+}
+
+.add-image-button:hover {
+  background-color: #1976D2;
 }
 
 /* Animaciones */
