@@ -119,3 +119,9 @@ ADD COLUMN Color VARCHAR(20);
 ALTER TABLE dbrestaurantes.mesas
 ADD COLUMN Posicion_X INT,
 ADD COLUMN Posicion_Y INT;
+
+
+/*borrar color en usuarios*/
+ALTER TABLE dbrestaurantes.usuario
+DROP COLUMN Color;
+
