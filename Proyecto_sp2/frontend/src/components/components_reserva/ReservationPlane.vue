@@ -2,7 +2,7 @@
   <div class="reservation-container">
     <div class="toolbar">
       <v-btn
-        v-if="usuario === 0"
+        v-if="usuario == 0"
         @click="toggleEditMode"
         :color="isEditMode ? 'error' : 'primary'"
         class="edit-button"
@@ -117,7 +117,7 @@ export default {
   data() {
     return {
       isEditMode: true,
-      usuario: 0, // Cambia el valor aquí según sea necesario
+      usuario: 0, 
       images: [],
       externalImages: [
         { id: 1, capacidad: 3, name: 'Imagen 1', src: "src/assets/images/imagen1.png", width: 50, height: 50 },
@@ -130,27 +130,29 @@ export default {
     };
   },
   mounted() {
-    this.loadState();  // Cargar estado al iniciar la aplicación
+    this.loadState(); 
     this.initializeDragAndResize();
+    this.isAuthenticated();
   },
   methods: {
+    //verificacion de usuario
+    isAuthenticated() {
+      this.usuario = localStorage.getItem('tipoUser');
+    },
     handleImageClick(img) {
       if (!this.isEditMode) {
         this.selectedImage = img;
       }
     },
-
     async saveMesasToDatabase() {
       try {
-        // Preparar los datos de las mesas
         const mesasData = this.images.map(img => ({
           id_mesa: img.id,
-          capacidad: img.capacidad || 0, // Si no tiene capacidad, ponemos 0
+          capacidad: img.capacidad || 0, 
           posicion_x: Math.round(parseFloat(img.x) || 0),
           posicion_y: Math.round(parseFloat(img.y) || 0)
         }));
 
-        // Llamada al backend para cada mesa
         const promises = mesasData.map(mesa => 
           fetch(`/editMesa/${mesa.id_mesa}`, {
             method: 'PUT',
@@ -165,14 +167,11 @@ export default {
           })
         );
 
-        // Esperar a que todas las actualizaciones terminen
         const results = await Promise.all(promises);
         
-        // Verificar si todas las operaciones fueron exitosas
         const allSuccessful = results.every(response => response.ok);
         
         if (allSuccessful) {
-          console.log('Mesas guardadas exitosamente en la base de datos');
           Swal.fire({
             icon: 'success',
             title: 'Éxito',
@@ -182,7 +181,6 @@ export default {
           throw new Error('Algunas mesas no pudieron ser actualizadas');
         }
       } catch (error) {
-        console.error('Error al guardar las mesas:', error);
         Swal.fire({
           icon: 'error',
           title: 'Error',
@@ -190,37 +188,127 @@ export default {
         });
       }
     },
-
     async toggleEditMode() {
-      if (this.isEditMode) {  // Si estamos saliendo del modo edición
-        console.log("Posiciones finales de las mesas:");
-        this.images.forEach(img => {
+      if (this.isEditMode) {  
+        const updatePromises = [];
+
+        for (const img of this.images) {
           const element = this.$refs.imageContainer.querySelector(`.draggable-image[data-id="${img.id}"]`);
           if (element) {
             const x = parseFloat(element.getAttribute('data-x')) || 0;
             const y = parseFloat(element.getAttribute('data-y')) || 0;
             
-            // Actualizar las coordenadas en el objeto de imagen
-            img.x = x;
-            img.y = y;
-            
-            console.log(`Mesa ${img.id}:`, {
-              nombre: img.name,
-              capacidad: img.capacidad,
-              posición: {
-                x: Math.round(x),
-                y: Math.round(y)
-              },
-              tamaño: {
-                ancho: img.width,
-                alto: img.height
-              }
-            });
-          }
-        });
+            try {
+              const checkResponse = await fetch('http://127.0.0.1:5000/checkMesa', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  id_mesa: img.id
+                })
+              });
+              
+              const checkResult = await checkResponse.json();
+              
+              // Preparar los datos base de la mesa
+              const mesaData = {
+                id_mesa: img.id,
+                capacidad: img.capacidad,
+                posicion_x: Math.round(x),
+                posicion_y: Math.round(y),
+                imagenes: null
+              };
 
-        // Guardar las mesas en la base de datos
-        await this.saveMesasToDatabase();
+              // Solo actualizamos imagenes si hay una imagen cargada
+              if (img.uploadedImage) {
+                mesaData.imagenes = JSON.stringify({
+                  nombre: img.uploadedImage.name,
+                  base64: img.uploadedImage.base64
+                });
+              }
+
+              let updatePromise;
+              
+              if (checkResult.exists) {
+                console.log('Actualizando mesa existente', img.id, 'con datos:', {
+                  ...mesaData,
+                  imagenes: mesaData.imagenes ? 'Imagen presente' : 'Sin imagen'
+                });
+                
+                updatePromise = fetch(`http://127.0.0.1:5000/updateMesa/${img.id}`, {
+                  method: 'PUT',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(mesaData)
+                }).then(async (response) => {
+                  if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                  }
+                  return response;
+                });
+
+                updatePromises.push(updatePromise);
+              } else {
+                console.log('Creando nueva mesa', img.id, 'con datos:', {
+                  ...mesaData,
+                  imagenes: mesaData.imagenes ? 'Imagen presente' : 'Sin imagen'
+                });
+                
+                updatePromise = fetch('http://127.0.0.1:5000/newMesa', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(mesaData)
+                }).then(async (response) => {
+                  if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                  }
+                  return response;
+                });
+
+                updatePromises.push(updatePromise);
+              }
+            } catch (error) {
+              console.error(`Error al procesar la mesa ${img.id}:`, error);
+            }
+          }
+        }
+
+        try {
+          const responses = await Promise.all(updatePromises);
+          let allSuccessful = true;
+
+          for (const response of responses) {
+            try {
+              const data = await response.json();
+              console.log('Respuesta exitosa del servidor:', data);
+            } catch (error) {
+              console.error('Error al procesar respuesta:', error);
+              allSuccessful = false;
+            }
+          }
+
+          if (allSuccessful) {
+            Swal.fire({
+              icon: 'success',
+              title: 'Éxito',
+              text: 'Las mesas se han guardado correctamente'
+            });
+          } else {
+            throw new Error('Algunas mesas no pudieron ser guardadas');
+          }
+        } catch (error) {
+          console.error('Error al guardar las mesas:', error);
+          
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudieron guardar las mesas en la base de datos'
+          });
+        }
       }
       
       this.isEditMode = !this.isEditMode;
@@ -239,7 +327,7 @@ export default {
           ],
           autoScroll: true,
           onmove: this.dragMoveListener,
-          enabled: this.isEditMode, // Desactivar arrastre si no está en modo edición
+          enabled: this.isEditMode,
         })
         .resizable({
           edges: { right: true, bottom: true },
@@ -248,7 +336,7 @@ export default {
               min: { width: 50, height: 50 },
             }),
           ],
-          enabled: this.isEditMode, // Desactivar redimensionamiento si no está en modo edición
+          enabled: this.isEditMode, 
           listeners: {
             move: (event) => this.resizeMove(event),
           },
@@ -275,10 +363,10 @@ export default {
     reserve() {
       this.$router.push({ 
         path: '/resevarForm',
-        query: { mesa: this.selectedImage.id } // Envía el ID de la imagen como número de mesa
+        query: { mesa: this.selectedImage.id } 
       });
       console.log("id mesa " + this.selectedImage);
-      this.selectedImage = null; // Cierra el modal
+      this.selectedImage = null; 
     },
     
     viewImage() {
@@ -329,45 +417,51 @@ export default {
       this.images = this.images.filter(img => img.id !== id);
       this.saveState(); // Guardar estado al eliminar una imagen
     },
-    addImagen(id) {
-  try {
-    const result = Swal.fire({
-      title: "Select image",
-      input: "file",
-      inputAttributes: {
-        "accept": "image/*",
-        "aria-label": "Upload your profile picture"
-      }
-    });
-
-    console.log(result);
-    if (result.value) {
-      const file = result.value;
-      const reader = new FileReader();
-      
-      reader.onload = (e) => {
-        const fileUrl = e.target.result;
-        console.log("Ruta del archivo:", fileUrl);
-        
-        Swal.fire({
-          title: "Your uploaded picture",
-          imageUrl: fileUrl,
-          imageAlt: "The uploaded picture"
+    async addImagen(id) {
+      try {
+        const result = await Swal.fire({
+          title: "Select image",
+          input: "file",
+          inputAttributes: {
+            "accept": "image/*",
+            "aria-label": "Upload your profile picture"
+          }
         });
-      };
 
-      console.log("Nombre del archivo:", file.name);
-      console.log("Tipo de archivo:", file.type);
-      console.log("Tamaño del archivo:", file.size);
+        if (result.value) {
+          const file = result.value;
+          const reader = new FileReader();
+          
+          reader.onload = async (e) => {
+            const fileUrl = e.target.result;
+            const base64Image = fileUrl.split(',')[1];
+            
+            const img = this.images.find(image => image.id === id);
+            if (img) {
+              img.uploadedImage = {
+                name: file.name,
+                base64: base64Image
+              };
+              console.log('Imagen guardada para la mesa', id, ':', {
+                nombre: file.name,
+                tamañoBase64: base64Image.length,
+                primerosCien: base64Image.substring(0, 100) + '...'
+              });
+            }
 
-      reader.readAsDataURL(file);
-    }
-    
-    console.log("id mesa:", id);
-  } catch (error) {
-    console.error("Error al cargar la imagen:", error);
-  }
-},
+            await Swal.fire({
+              title: "Your uploaded picture",
+              imageUrl: fileUrl,
+              imageAlt: "The uploaded picture"
+            });
+          };
+
+          reader.readAsDataURL(file);
+        }
+      } catch (error) {
+        console.error("Error al cargar la imagen:", error);
+      }
+    },
     resizeMove(event) {
       if (!this.isEditMode) return; // No hacer nada si no está en modo edición
 
