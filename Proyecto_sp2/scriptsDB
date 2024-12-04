@@ -128,3 +128,8 @@ DROP COLUMN Color;
 /*cambiar tabla de reservaciones*/
 ALTER TABLE dbrestaurantes.reservaciones
 CHANGE COLUMN fin hora TIME;
+
+
+/*para no obligar a hacer una orden*/
+ALTER TABLE dbrestaurantes.reservaciones
+MODIFY id_orden int NULL;
