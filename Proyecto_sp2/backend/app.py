@@ -11,12 +11,10 @@ from flask_jwt_extended import JWTManager, create_access_token
 import base64
 
 app = Flask(__name__)
+CORS(app)
 
-#folder donde se guardaran las imagenes
-UPLOAD_FOLDER = 'static/uploads/'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-CORS(app, resources={r"/*": {"origins": "*"}})
+#os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "C:\\Users\\User\\Desktop\\prueba_chat\\lateral-boulder-439501-f1-014fb3e367c0.json"
+#vision_client = vision.ImageAnnotatorClient()
 
 #conexion con la base de datos 
 app.config['MYSQL_HOST'] = 'localhost'
@@ -72,12 +70,12 @@ def login():
         return jsonify({"message": "El usuario y la contraseña son requeridos para iniciar sesión"}), 400
 
     query = """
-        SELECT Usuario.Usuario, Usuario.Password, Usuario.Tipo_User, Clientes.Nombres, Clientes.Apellidos, Clientes.Telefono, Clientes.email 
+        SELECT Usuario.Usuario, Usuario.Password, Usuario.id_user, Usuario.Tipo_User, Clientes.Nombres, Clientes.Apellidos, Clientes.Telefono, Clientes.email 
         FROM dbRestaurantes.Usuario 
         INNER JOIN  dbRestaurantes.Clientes on Usuario.id_user = Clientes.id 
         WHERE Usuario.Usuario = %s 
         Union 
-        SELECT Usuario.Usuario, Usuario.Password, Usuario.Tipo_User, Empleados.Nombres, Empleados.Apellidos, Empleados.Telefono, Empleados.email 
+        SELECT Usuario.Usuario, Usuario.Password, Usuario.id_user, Usuario.Tipo_User, Empleados.Nombres, Empleados.Apellidos, Empleados.Telefono, Empleados.email 
         FROM dbRestaurantes.Usuario 
         INNER JOIN  dbRestaurantes.Empleados on Usuario.id_user = Empleados.id 
         WHERE Usuario.Usuario = %s
@@ -99,11 +97,12 @@ def login():
             # Excluye la contraseña antes de devolver el resultado
             user_data = {
                 "Usuario": result[0],
-                "Tipo_User": result[2],
-                "Nombres": result[3],
-                "Apellidos": result[4],
-                "Telefono": result[5],
-                "email": result[6]
+                "Id_User": result[2],
+                "Tipo_User": result[3],
+                "Nombres": result[4],
+                "Apellidos": result[5],
+                "Telefono": result[6],
+                "email": result[7]
             }
             return jsonify({"data": user_data, "token": token}), 200
         else:
@@ -171,12 +170,12 @@ def crear_reserva():
     data = request.json
     cursor = mysql.connection.cursor()
     query = """ 
-    INSERT INTO reservaciones (id_usuario, id_mesa, id_restaurante, fecha, hora, id_estado, observaciones) 
-    VALUES (%s, %s, %s, %s, %s, %s, %s) 
+    INSERT INTO dbrestaurantes.reservaciones (id_mesa, id_cliente, id_orden, inicio, hora, no_personas, id_estado) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s) 
     """
     values = (
-        data['id_usuario'], data['id_mesa'], data['id_restaurante'],
-        data['fecha'], data['hora'], data['id_estado'], data['observaciones']
+       data['id_mesa'],data['id_cliente'], data['id_orden'],
+        data['inicio'], data['hora'], data['no_personas'], data['id_estado']
     )
     try:
         cursor.execute(query, values)
@@ -215,7 +214,7 @@ def obtener_reserva(id):
         return jsonify({
             'id': reserva[0],
             'id_usuario': reserva[1],
-            'id_mesa': reserva[2],
+            'id': reserva[2],
             'id_restaurante': reserva[3],
             'fecha': reserva[4],
             'hora': reserva[5],
@@ -236,7 +235,7 @@ def obtener_reservas_usuario(id_usuario):
         {
             'id': reserva[0],
             'id_usuario': reserva[1],
-            'id_mesa': reserva[2],
+            'id': reserva[2],
             'id_restaurante': reserva[3],
             'fecha': reserva[4],
             'hora': reserva[5],
@@ -593,18 +592,55 @@ def getMesas():
         mesas.append(mesa)
     return jsonify(mesas)
 
+@app.route('/checkMesa', methods=['POST'])
+def check_mesa():
+    data = request.json
+    id = data.get('id')
+    
+    if not id:
+        return jsonify({'error': 'Falta el campo id'}), 400
+
+    cursor = mysql.connection.cursor()
+    query = "SELECT * FROM Mesas WHERE Id = %s"
+    try:
+        cursor.execute(query, (id,))
+        result = cursor.fetchone()
+        cursor.close()
+        
+        if result:
+            return jsonify({'exists': True, 'mesa': result}), 200
+        else:
+            return jsonify({'exists': False}), 200
+
+    except Exception as e:
+        print("Error al verificar mesa:", str(e))  # Para debug
+        cursor.close()
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/newMesa', methods=['POST'])
 def newMesa():
     data = request.json
     cursor = mysql.connection.cursor()
-    query = "INSERT INTO dbRestaurantes.Mesas (Capacidad) VALUES (%s)"
-    values = (data['capacidad'],)
+    query = """
+
+    INSERT INTO Mesas (id, capacidad, posicion_x, posicion_y, imagenes)
+    VALUES (%s, %s, %s, %s, CAST(%s AS JSON))
+    """
+    values = (
+        data['id'],
+        data['capacidad'],
+        data['posicion_x'],
+        data['posicion_y'],
+        data['imagenes'],
+    )
     try:
         cursor.execute(query, values)
         mysql.connection.commit()
         cursor.close()
         return jsonify({'message': 'Mesa creada exitosamente'}), 200
     except Exception as e:
+        print("Error al crear mesa:", str(e))  # Para debug
         cursor.close()
         return jsonify({'error': str(e)}), 500
 
@@ -612,26 +648,25 @@ def newMesa():
 def editMesa(id):
     data = request.json
     cursor = mysql.connection.cursor()
-    query = "UPDATE dbRestaurantes.Mesas SET Capacidad = %s WHERE Id = %s"
-    values = (data['capacidad'], id)
+    query = """
+    INSERT INTO dbRestaurantes.mesas (id, capacidad, posicion_x, posicion_y, imagenes) 
+    VALUES (%s, %s, %s, %s, NULL)
+    ON DUPLICATE KEY UPDATE 
+    capacidad = VALUES(capacidad),
+    posicion_x = VALUES(posicion_x),
+    posicion_y = VALUES(posicion_y)
+    """
+    values = (
+        id,
+        data['capacidad'],
+        data['posicion_x'],
+        data['posicion_y']
+    )
     try:
         cursor.execute(query, values)
         mysql.connection.commit()
         cursor.close()
         return jsonify({'message': 'Mesa actualizada exitosamente'}), 200
-    except Exception as e:
-        cursor.close()
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/deleteMesa/<int:id>', methods=['DELETE'])
-def deleteMesa(id):
-    cursor = mysql.connection.cursor()
-    query = "DELETE FROM dbRestaurantes.Mesas WHERE Id = %s"
-    try:
-        cursor.execute(query, (id,))
-        mysql.connection.commit()
-        cursor.close()
-        return jsonify({'message': 'Mesa eliminada exitosamente'}), 200
     except Exception as e:
         cursor.close()
         return jsonify({'error': str(e)}), 500
@@ -901,6 +936,43 @@ def get_menu_item(id):
     except Exception as e:
         return jsonify({'message': 'Error al obtener el platillo', 'error': str(e)}), 500
 
-    
+@app.route('/getMesas/<int:id>', methods=['GET'])
+def get_mesa(id):
+    try:
+        cursor = mysql.connection.cursor()
+        
+        query = """
+        SELECT id, capacidad, posicion_x, posicion_y, imagenes
+        FROM mesas 
+        WHERE id = %s
+        """
+        
+        cursor.execute(query, (id,))
+        mesa = cursor.fetchone()
+        cursor.close()
+        
+        if mesa:
+            return jsonify({
+                'id': mesa[0],
+                'capacidad': mesa[1],
+                'posicion_x': mesa[2],
+                'posicion_y': mesa[3],
+                'imagenes': mesa[4]
+            }), 200
+        else:
+            return jsonify({
+                'message': 'Mesa no encontrada',
+                'id': id
+            }), 404
+            
+    except Exception as e:
+        print(f"Error al obtener la mesa {id}: {str(e)}")
+        if cursor:
+            cursor.close()
+        return jsonify({
+            'error': 'Error al obtener la mesa',
+            'details': str(e)
+        }), 500
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
