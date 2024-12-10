@@ -38,7 +38,7 @@
               ></v-combobox>
               <v-file-input
                 @change="onFileChange"
-                label="Imagen del empleado"
+                label="Imagen del platillo"
                 accept="image/*"
                 prepend-icon="mdi-camera"
                 chips

@@ -4,7 +4,7 @@ import ReservationForm from '../components/ReservationForm.vue';
 import FotoForm from '../components/PanoramaViewer.vue'; 
 import ReservationDetails from '../components/ReservationDetails.vue';
 import Interaccion from '../components/ChatdeDescripcion.vue';
-import VistaPlatillo from '../components/VistaPlatillo.vue';
+//import VistaPlatillo from '../components/VistaPlatillo.vue';
 const routes = [
   {
     path: '/',
@@ -31,11 +31,11 @@ const routes = [
       component: ReservationDetails,
       name: 'reservation-details',
   },
-  {
+  /*{
     path: '/vistaplatillo', // Usar :id para capturar el ID en la ruta
       component: VistaPlatillo,
       name: 'vistaplatillo',
-  },
+  },*/
 ];
 
 const router = createRouter({

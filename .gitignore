@@ -1,3 +1,5 @@
 venv
-.\frontend\restaurantes-app2\node_modules
-.\Proyecto_flask\static\uploads
+frontend/restaurantes-app2/node_modules/
+Proyecto_flask/static/uploads/
+Proyecto_sp2/frontend/node_modules/
+sp2/sp2/frontend/node_modules/

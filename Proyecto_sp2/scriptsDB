@@ -112,10 +112,12 @@ CREATE TABLE Usuario (
     PRIMARY KEY (Usuario,id_user,Tipo_user)
 );
 
-/*campos agregados en cada tabla*/
-ALTER TABLE dbrestaurantes.usuario
-ADD COLUMN Color VARCHAR(20);
-
 ALTER TABLE dbrestaurantes.mesas
 ADD COLUMN Posicion_X INT,
 ADD COLUMN Posicion_Y INT;
+
+CREATE TABLE Configuraciones ( 
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    Color VARCHAR(20),
+    Descripcion VARCHAR(500)
+); 

@@ -24,16 +24,28 @@
                         icon: 'mdi-shape'
                     },
                     {
+                        title: 'menú',
+                        descrip: 'Gestiona eficientemente el menú de tu restaurante',
+                        link: '/maintenances/menu',
+                        icon: 'mdi-silverware'
+                    },
+                    {
+                        title: 'Configuración',
+                        descrip: 'Gestiona la información y apariencia de tu restaurante',
+                        link: '/maintenances/tables',
+                        icon: 'mdi-table-furniture'
+                    },
+                    {
                         title: 'Puestos',
                         descrip: 'Gestiona eficientemente los puestos de tus empleados',
                         link: '/maintenances/positionEmployee',
                         icon: 'mdi-account-wrench'
                     },
                     {
-                        title: 'menú',
-                        descrip: 'Gestiona eficientemente el menú de tu restaurante',
-                        link: '/maintenances/menu',
-                        icon: 'mdi-silverware'
+                        title: 'Empleados',
+                        descrip: 'Gestiona eficientemente a tus empleados para obtener un mejor rendimiento',
+                        link: '/maintenances/employees',
+                        icon: 'mdi-account-group'
                     },
                     {
                         title: 'Estados',
@@ -41,18 +53,6 @@
                         link: '/maintenances/status',
                         icon: 'mdi-list-status'
                     },
-                    {
-                        title: 'Mesas',
-                        descrip: 'Gestiona eficientemente las mesas disponibles de tu restaurante',
-                        link: '/maintenances/tables',
-                        icon: 'mdi-table-furniture'
-                    },
-                    {
-                        title: 'Empleados',
-                        descrip: 'Gestiona eficientemente a tus empleados para obtener un mejor rendimiento',
-                        link: '/maintenances/employees',
-                        icon: 'mdi-account-group'
-                    }
                 ]
             }
         }

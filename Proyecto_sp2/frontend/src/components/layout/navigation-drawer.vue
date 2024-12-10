@@ -69,9 +69,6 @@
           isAuthenticated() {
               return !!localStorage.getItem('token');
           },
-          isAuthenticated() {
-              return localStorage.getItem('tipoUser') == 0;
-          }
       }
     }
   </script>
