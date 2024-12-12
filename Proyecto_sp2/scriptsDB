@@ -134,3 +134,6 @@ CHANGE COLUMN fin hora TIME;
 /*para no obligar a hacer una orden*/
 ALTER TABLE dbrestaurantes.reservaciones
 MODIFY id_orden int NULL;
+
+ALTER TABLE `mesas`
+ADD COLUMN `num_mesa` INT DEFAULT NULL;
