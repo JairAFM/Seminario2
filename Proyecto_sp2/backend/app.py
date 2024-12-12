@@ -3,23 +3,34 @@ from flask_mysqldb import MySQL
 from flask_cors import CORS
 import random
 import string
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
+from google.cloud import vision
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import JWTManager, create_access_token
 import base64
+import openai
 
 app = Flask(__name__)
+
+UPLOAD_FOLDER = 'static/uploads/'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
 CORS(app)
 
-#os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "C:\\Users\\User\\Desktop\\prueba_chat\\lateral-boulder-439501-f1-014fb3e367c0.json"
-#vision_client = vision.ImageAnnotatorClient()
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "..\\lateral-boulder-439501-f1-014fb3e367c0.json"
+
+# Inicializar el cliente de Google Vision
+vision_client = vision.ImageAnnotatorClient()
+
+#credenciales de openai
+openai.api_key = "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"
 
 #conexion con la base de datos 
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'root'
+app.config['MYSQL_PASSWORD'] = 'admin'
 app.config['MYSQL_DB'] = 'dbRestaurantes'
 mysql = MySQL(app)
 
@@ -577,47 +588,27 @@ def deleteEmpleado(id, usuario):
         cursor.close()
         return jsonify({'error': str(e)}), 500
 
-@app.route('/getMesas', methods=['GET'])
-def getMesas():
-    cur = mysql.connection.cursor()
-    cur.execute('SELECT Id, Capacidad FROM dbRestaurantes.Mesas')
-    rows = cur.fetchall()
-    cur.close()
-    mesas = []
-    for row in rows:
-        mesa = {
-            "id": row[0],
-            "capacidad": row[1]
-        }
-        mesas.append(mesa)
-    return jsonify(mesas)
-
-@app.route('/checkMesa', methods=['POST'])
+#obtiene ids de las mesas existentes
+@app.route('/checkMesa', methods=['GET'])
 def check_mesa():
-    data = request.json
-    id = data.get('id')
-    
-    if not id:
-        return jsonify({'error': 'Falta el campo id'}), 400
-
     cursor = mysql.connection.cursor()
-    query = "SELECT * FROM Mesas WHERE Id = %s"
+
     try:
-        cursor.execute(query, (id,))
-        result = cursor.fetchone()
+        query = "SELECT DISTINCT id FROM dbRestaurantes.Mesas"
+        cursor.execute(query)
+        result = cursor.fetchall()
         cursor.close()
-        
-        if result:
-            return jsonify({'exists': True, 'mesa': result}), 200
-        else:
-            return jsonify({'exists': False}), 200
+
+        ids = [row[0] for row in result]
+
+        return jsonify({'ids': ids}), 200
 
     except Exception as e:
-        print("Error al verificar mesa:", str(e))  # Para debug
+        print("Error al obtener IDs de las mesas:", str(e)) 
         cursor.close()
         return jsonify({'error': str(e)}), 500
 
-
+#agregar nueva mesa
 @app.route('/newMesa', methods=['POST'])
 def newMesa():
     data = request.json
@@ -644,23 +635,25 @@ def newMesa():
         cursor.close()
         return jsonify({'error': str(e)}), 500
 
+#actualizar mesa
 @app.route('/editMesa/<int:id>', methods=['PUT'])
 def editMesa(id):
     data = request.json
     cursor = mysql.connection.cursor()
     query = """
-    INSERT INTO dbRestaurantes.mesas (id, capacidad, posicion_x, posicion_y, imagenes) 
-    VALUES (%s, %s, %s, %s, NULL)
-    ON DUPLICATE KEY UPDATE 
-    capacidad = VALUES(capacidad),
-    posicion_x = VALUES(posicion_x),
-    posicion_y = VALUES(posicion_y)
+    UPDATE dbRestaurantes.mesas
+    SET capacidad = %s,
+        posicion_x = %s,
+        posicion_y = %s,
+        imagenes = %s
+    WHERE id = %s
     """
     values = (
-        id,
         data['capacidad'],
         data['posicion_x'],
-        data['posicion_y']
+        data['posicion_y'],
+        data['imagenes'], 
+        id
     )
     try:
         cursor.execute(query, values)
@@ -762,10 +755,12 @@ def update_menu_item(id):
         SET Titulo = %s,
             Descripcion = %s,
             Precio = %s,
+            Id_categoria = %s,
             promocion = %s,
             precio_promo = %s,
             fechaIni_promo = %s,
             fechaFin_promo = %s,
+            imagenes = %s,
             FechaActualizacion = %s
         WHERE Id = %s
     """
@@ -773,10 +768,12 @@ def update_menu_item(id):
         data['Titulo'],
         data['Descripcion'],
         data['Precio'],
+        data['Id_Categoria'],
         data['promo'],
         data['precio_promo'],
         data['inicio_promo'],
         data['fin_promo'],
+        data['image'],
         now,
         id,
     )
@@ -936,43 +933,127 @@ def get_menu_item(id):
     except Exception as e:
         return jsonify({'message': 'Error al obtener el platillo', 'error': str(e)}), 500
 
-@app.route('/getMesas/<int:id>', methods=['GET'])
-def get_mesa(id):
+
+#mesas
+@app.route('/getMesas', methods=['GET'])
+def get_mesas():
     try:
         cursor = mysql.connection.cursor()
         
         query = """
-        SELECT id, capacidad, posicion_x, posicion_y, imagenes
-        FROM mesas 
-        WHERE id = %s
+        SELECT * 
+        FROM dbRestaurantes.mesas
         """
         
-        cursor.execute(query, (id,))
-        mesa = cursor.fetchone()
+        cursor.execute(query)
+        mesas = cursor.fetchall()  
         cursor.close()
         
-        if mesa:
-            return jsonify({
-                'id': mesa[0],
-                'capacidad': mesa[1],
-                'posicion_x': mesa[2],
-                'posicion_y': mesa[3],
-                'imagenes': mesa[4]
-            }), 200
+        if mesas:
+            mesas_list = []
+            for mesa in mesas:
+                mesas_list.append({
+                    'id': mesa[0],
+                    'capacidad': mesa[1],
+                    'imagenes': mesa[2],
+                    'posicion_x': mesa[3],
+                    'posicion_y': mesa[4],
+                    'num_mesa': mesa[5]
+                })
+            return jsonify(mesas_list), 200
         else:
             return jsonify({
-                'message': 'Mesa no encontrada',
-                'id': id
+                'message': 'No se encontraron mesas'
             }), 404
             
     except Exception as e:
-        print(f"Error al obtener la mesa {id}: {str(e)}")
+        print(f"Error al obtener las mesas: {str(e)}")
         if cursor:
             cursor.close()
         return jsonify({
-            'error': 'Error al obtener la mesa',
+            'error': 'Error al obtener las mesas',
             'details': str(e)
         }), 500
+
+
+@app.route('/verReservas/<int:id>', methods=['GET'])
+def ver_reservas(id):
+    cursor = mysql.connection.cursor()
+    
+    try:
+        query = """
+        SELECT a.id_mesa, a.id_orden, a.inicio, hora, a.no_personas, b.descripcion
+        FROM dbrestaurantes.reservaciones a, dbrestaurantes.estadosreserva b 
+        WHERE a.Id_Cliente = %s
+        """
+        cursor.execute(query, (id,))
+        result = cursor.fetchall()
+        cursor.close()
+
+        if not result:
+            return jsonify({'message': 'No se encontraron reservas para este cliente.'}), 404
+
+        reservas = []
+        for row in result:
+            reservas.append({
+                'id_mesa': row[0],  
+                'id_orden': row[1],      
+                'inicio': row[2],      
+                'hora': row[3].total_seconds() if isinstance(row[3], timedelta) else row[3],     
+                'no_personas': row[4],
+                'descripcion': row[5],          
+            })
+
+        return jsonify(reservas), 200
+    except Exception as e:
+        print("Error al obtener reservas:", str(e))  # Para debug
+        cursor.close()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/analyze', methods=['POST'])
+def analyze_image():
+    if 'image' not in request.files:
+        return jsonify({'error': 'No se ha proporcionado ninguna imagen.'}), 400
+
+    file = request.files['image']
+    content = file.read()
+
+    image = vision.Image(content=content)
+    response = vision_client.label_detection(image=image)
+    labels = response.label_annotations
+
+    labels_list = [label.description for label in labels]
+
+    if labels_list:
+        description = f"Este platillo está compuesto por: {', '.join(labels_list[:-1])}, y {labels_list[-1]}."
+    else:
+        description = "No se pudieron identificar ingredientes para este platillo."
+
+    return jsonify({'description': description})
+
+@app.route('/generar_desc', methods=['POST'])
+def generar_desc():
+    data = request.json
+    prompt = data.get('prompt', '')
+    
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  
+            messages=[
+                {"role": "system", "content": "Eres un asistente útil."},
+                {"role": "user", "content": prompt},
+            ],
+            max_tokens=150
+        )
+        return jsonify(response.choices[0].message['content'].strip())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/ar')
+def ar_view():
+    image = request.args.get('image')
+    # Aquí puedes validar o ajustar la imagen si es necesario
+    return send_from_directory(os.path.join(app.root_path, 'static', 'img'), image)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
