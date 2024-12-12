@@ -1049,6 +1049,36 @@ def generar_desc():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/deleteMesa/<int:id>', methods=['DELETE'])
+def delete_mesa(id):
+    try:
+        cursor = mysql.connection.cursor()
+
+        query = "DELETE FROM dbRestaurantes.mesas WHERE id = %s"
+        
+        cursor.execute(query, (id,))
+        mysql.connection.commit()  
+        
+        if cursor.rowcount > 0:
+            cursor.close()
+            return jsonify({
+                'message': f'Mesa con id {id} eliminada exitosamente.'
+            }), 200
+        else:
+            cursor.close()
+            return jsonify({
+                'message': f'No se encontró una mesa con id {id}.'
+            }), 404
+
+    except Exception as e:
+        print(f"Error al eliminar la mesa {id}: {str(e)}")
+        if cursor:
+            cursor.close()
+        return jsonify({
+            'error': 'Error al eliminar la mesa',
+            'details': str(e)
+        }), 500
+	    
 @app.route('/ar')
 def ar_view():
     image = request.args.get('image')
