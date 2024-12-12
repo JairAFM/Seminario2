@@ -127,12 +127,20 @@ export default {
         { id: 5, capacidad: 0, name: 'Imagen 5', src: "src/assets/images/baños.png", width: 50 },
       ],
       selectedImage: null,
+      mesasAgregadas: [],
+      idArray: [],
+      idUpdate: [],
+      idNew: [],
+      idDelete: [],
+      mesasObtenidas: []
     };
   },
   mounted() {
     this.loadState(); 
     this.initializeDragAndResize();
     this.isAuthenticated();
+    this.obtenerIds();
+    this.obtenerMesas();
   },
   methods: {
     //verificacion de usuario
@@ -144,17 +152,96 @@ export default {
         this.selectedImage = img;
       }
     },
-    async saveMesasToDatabase() {
-      try {
-        const mesasData = this.images.map(img => ({
-          id_mesa: img.id,
-          capacidad: img.capacidad || 0, 
-          posicion_x: Math.round(parseFloat(img.x) || 0),
-          posicion_y: Math.round(parseFloat(img.y) || 0)
+    async obtenerIds(){
+      const obtenerIds = await fetch('http://127.0.0.1:5000/checkMesa', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (obtenerIds.ok) {
+        const data = await obtenerIds.json(); 
+        this.idArray = data.ids; 
+        console.log("Array de IDs: ", this.idArray); 
+      } else {
+        console.error("Error al obtener los IDs de las mesas");
+      }
+    },
+    async obtenerMesas(){
+      const mesasO = await fetch('http://127.0.0.1:5000/getMesas', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (mesasO.ok) {
+        const data = await mesasO.json(); 
+        this.mesasObtenidas = data; 
+        
+        this.mesasAgregadas = data.map(mesa => ({
+          id: mesa.id,
+          capacidad: mesa.capacidad,
+          imagenes: mesa.imagenes ? JSON.stringify({
+            nombre: mesa.imagenes.nombre || 'Mesa imagen',
+            base64: mesa.imagenes.base64
+          }) : null,
+          posicion_x: mesa.posicion_x,
+          posicion_y: mesa.posicion_y,
+          num_mesa: mesa.num_mesa
         }));
 
-        const promises = mesasData.map(mesa => 
-          fetch(`/editMesa/${mesa.id_mesa}`, {
+        // Colocar imágenes en el plano
+        this.$nextTick(() => {
+          this.mesasAgregadas.forEach(mesa => {
+            // Buscar imagen externa que coincida con num_mesa
+            const externalImage = this.externalImages.find(
+              img => img.id === mesa.num_mesa
+            );
+
+            if (externalImage) {
+              const newImg = {
+                id: mesa.num_mesa,
+                name: externalImage.name,
+                src: externalImage.src,
+                width: 100,
+                height: 100,
+                x: mesa.posicion_x,
+                y: mesa.posicion_y,
+                capacidad: externalImage.capacidad,
+              };
+
+              this.images.push(newImg);
+
+              // Esperar a que el DOM se actualice y posicionar la imagen
+              this.$nextTick(() => {
+                const imgElement = this.$refs.imageContainer.querySelector(`.draggable-image[data-id="${newImg.id}"]`);
+                if (imgElement) {
+                  imgElement.style.transform = `translate(${mesa.posicion_x}px, ${mesa.posicion_y}px)`;
+                  imgElement.setAttribute('data-x', mesa.posicion_x);
+                  imgElement.setAttribute('data-y', mesa.posicion_y);
+                }
+              });
+            }
+          });
+        });
+
+        console.log("Array de Mesas: ", this.mesasObtenidas);
+        console.log("Mesas Agregadas: ", this.mesasAgregadas);
+      } else {
+        console.error("Error al obtener las mesas");
+      }
+    },
+    async actualizarMesas(mesasData) {
+      try {
+        // Verifica que el array no esté vacío
+        if (!Array.isArray(mesasData) || mesasData.length === 0) {
+          throw new Error("El array de mesas está vacío o no es válido");
+        }
+
+        const promises = mesasData.map(mesa =>
+          fetch(`http://127.0.0.1:5000/editMesa/${mesa.id}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -162,15 +249,16 @@ export default {
             body: JSON.stringify({
               capacidad: mesa.capacidad,
               posicion_x: mesa.posicion_x,
-              posicion_y: mesa.posicion_y
+              posicion_y: mesa.posicion_y,
+              imagenes: mesa.imagenes || null
             })
           })
         );
 
         const results = await Promise.all(promises);
-        
+
         const allSuccessful = results.every(response => response.ok);
-        
+
         if (allSuccessful) {
           Swal.fire({
             icon: 'success',
@@ -184,7 +272,7 @@ export default {
         Swal.fire({
           icon: 'error',
           title: 'Error',
-          text: 'No se pudieron guardar las mesas en la base de datos'
+          text: error.message || 'No se pudieron guardar las mesas en la base de datos'
         });
       }
     },
@@ -199,19 +287,8 @@ export default {
             const y = parseFloat(element.getAttribute('data-y')) || 0;
             
             try {
-              const checkResponse = await fetch('http://127.0.0.1:5000/checkMesa', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  id_mesa: img.id
-                })
-              });
+              //const checkResult = await obtenerIds.json();
               
-              const checkResult = await checkResponse.json();
-              
-              // Preparar los datos base de la mesa
               const mesaData = {
                 id_mesa: img.id,
                 capacidad: img.capacidad,
@@ -220,7 +297,7 @@ export default {
                 imagenes: null
               };
 
-              // Solo actualizamos imagenes si hay una imagen cargada
+              // Se actualiza la imagen si se selecciona una
               if (img.uploadedImage) {
                 mesaData.imagenes = JSON.stringify({
                   nombre: img.uploadedImage.name,
@@ -228,15 +305,55 @@ export default {
                 });
               }
 
+              function addIfNotExists(array, value) {
+                if (!array.includes(value)) {
+                  array.push(value);
+                }
+              }
+
+              for (let i = 0; i < this.idArray.length; i++) {
+                const idArrayItem = this.idArray[i];
+                const matchingMesa = this.mesasAgregadas.find(mesa => mesa.id === idArrayItem);
+
+                if (matchingMesa) {
+                  addIfNotExists(this.idUpdate, matchingMesa); 
+                } else {
+                  addIfNotExists(this.idDelete, idArrayItem); 
+                }
+              }
+
+              for (let j = 0; j < this.mesasAgregadas.length; j++) {
+                const mesasAgregadasItem = this.mesasAgregadas[j].id;
+                const existsInIdArray = this.idArray.includes(mesasAgregadasItem);
+
+                if (!existsInIdArray) {
+                  addIfNotExists(this.idNew, mesasAgregadasItem); 
+                }
+              }
+
+
+              if(this.idUpdate.length > 0){
+               this.actualizarMesas(this.idUpdate);
+              }
+              /*if(this.idDelete.length > 0){
+                
+              }
+              if(this.idNew.length > 0){
+                
+              }*/
+              console.log("idUpdate: " + this.idUpdate);
+              console.log("idDelete: " + this.idDelete);
+              console.log("idNew: " + this.idNew);
+
               let updatePromise;
               
-              if (checkResult.exists) {
+              /*if (checkResult.exists) {
                 console.log('Actualizando mesa existente', img.id, 'con datos:', {
                   ...mesaData,
                   imagenes: mesaData.imagenes ? 'Imagen presente' : 'Sin imagen'
                 });
                 
-                updatePromise = fetch(`http://127.0.0.1:5000/updateMesa/${img.id}`, {
+                /*updatePromise = fetch(`http://127.0.0.1:5000/updateMesa/${img.id}`, {
                   method: 'PUT',
                   headers: {
                     'Content-Type': 'application/json',
@@ -247,16 +364,16 @@ export default {
                     throw new Error(`HTTP error! status: ${response.status}`);
                   }
                   return response;
-                });
+                });*/
 
-                updatePromises.push(updatePromise);
-              } else {
+                //updatePromises.push(updatePromise);
+              /*} else {
                 console.log('Creando nueva mesa', img.id, 'con datos:', {
                   ...mesaData,
                   imagenes: mesaData.imagenes ? 'Imagen presente' : 'Sin imagen'
                 });
                 
-                updatePromise = fetch('http://127.0.0.1:5000/newMesa', {
+                /*updatePromise = fetch('http://127.0.0.1:5000/newMesa', {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -270,7 +387,7 @@ export default {
                 });
 
                 updatePromises.push(updatePromise);
-              }
+              }*/
             } catch (error) {
               console.error(`Error al procesar la mesa ${img.id}:`, error);
             }
@@ -386,7 +503,7 @@ export default {
       const centerY = containerRect.height / 2 - 50;
 
       const newImg = {
-        id: this.images.length + 1,
+        id: externalImg.id,
         name: externalImg.name,
         src: externalImg.src,
         width: 100,
@@ -396,8 +513,23 @@ export default {
         capacidad: externalImg.capacidad,
       };
       
-      console.log(`Mesa ${newImg.id} colocada en - X: ${centerX}px, Y: ${centerY}px`);
+      // Agregar mesa a la lista mesasAgregadas
+      const mesaAgregada = {
+        id: this.mesasAgregadas.length + 1,
+        capacidad: externalImg.capacidad,
+        imagenes: {
+        },
+        posicion_x: centerX,
+        posicion_y: centerY,
+        num_mesa: externalImg.id
+      };
+
+      this.mesasAgregadas.push(mesaAgregada);
+
+      console.log('Mesas Agregadasssss:', this.mesasAgregadas);
       
+      console.log('Datos de Mesa Agregada:', mesaAgregada);
+
       this.images.push(newImg);
       
       // Esperar a que el DOM se actualice
@@ -420,11 +552,11 @@ export default {
     async addImagen(id) {
       try {
         const result = await Swal.fire({
-          title: "Select image",
+          title: "Seleccionar imagen",
           input: "file",
           inputAttributes: {
             "accept": "image/*",
-            "aria-label": "Upload your profile picture"
+            "aria-label": "Subir imagen"
           }
         });
 
@@ -438,22 +570,49 @@ export default {
             
             const img = this.images.find(image => image.id === id);
             if (img) {
+              // Obtener la posición actual de la imagen
+              const imgElement = this.$refs.imageContainer.querySelector(`.draggable-image[data-id="${id}"]`);
+              const posX = parseFloat(imgElement.getAttribute('data-x') || 0);
+              const posY = parseFloat(imgElement.getAttribute('data-y') || 0);
+
+              // Crear objeto de imagen como JSON
+              const imagenJson = JSON.stringify({
+                nombre: file.name,
+                base64: base64Image
+              });
+
+              // Buscar si ya existe una mesa con este ID en mesasAgregadas
+              const mesaExistente = this.mesasAgregadas.find(mesa => mesa.id === id);
+
+              if (mesaExistente) {
+                mesaExistente.imagenes = imagenJson;
+              } else {
+                const mesaAgregada = {
+                  id: id,
+                  capacidad: null,
+                  imagenes: imagenJson,
+                  posicion_x: posX,
+                  posicion_y: posY
+                };
+
+                this.mesasAgregadas.push(mesaAgregada);
+              }
+
+              // Actualizar la imagen en images
               img.uploadedImage = {
                 name: file.name,
-                base64: base64Image
+                base64: base64Image,
+                src: fileUrl
               };
-              console.log('Imagen guardada para la mesa', id, ':', {
-                nombre: file.name,
-                tamañoBase64: base64Image.length,
-                primerosCien: base64Image.substring(0, 100) + '...'
+
+              console.log('Mesasssssssss Agregadassssssss:', this.mesasAgregadas);
+
+              await Swal.fire({
+                title: "Imagen subida",
+                imageUrl: fileUrl,
+                imageAlt: "Imagen subida"
               });
             }
-
-            await Swal.fire({
-              title: "Your uploaded picture",
-              imageUrl: fileUrl,
-              imageAlt: "The uploaded picture"
-            });
           };
 
           reader.readAsDataURL(file);
