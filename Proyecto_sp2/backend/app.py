@@ -1085,5 +1085,81 @@ def ar_view():
     # Aquí puedes validar o ajustar la imagen si es necesario
     return send_from_directory(os.path.join(app.root_path, 'static', 'img'), image)
 
+
+@app.route('/getConfiguracion', methods=['GET'])
+def getConfiguracion():
+    try:
+        cursor = mysql.connection.cursor()
+        
+        query = """
+        SELECT id, color, descripcion
+        FROM Configuraciones 
+        WHERE id = %s
+        """
+        
+        cursor.execute(query, (1,))
+        config = cursor.fetchone()
+        cursor.close()
+        
+        if config:
+            return jsonify({
+                'id': config[0],
+                'color': config[1],
+                'descripcion': config[2]
+            }), 200
+        else:
+            return jsonify({
+                'message': 'configuracion no encontrada no encontrada',
+                'id': 1
+            }), 404
+            
+    except Exception as e:
+        print(f"Error al obtener la configuracion: {str(e)}")
+        if cursor:
+            cursor.close()
+        return jsonify({
+            'error': 'Error al obtener la configuracion',
+            'details': str(e)
+        }), 500
+
+
+@app.route('/configTr', methods=['POST'])
+def configTr():
+    data = request.json
+
+    # Validación de campos
+    if 'opcion' not in data or 'color' not in data or 'descripcion' not in data:
+        return jsonify({'error': 'Faltan parámetros en la solicitud'}), 400
+
+    cursor = mysql.connection.cursor()
+    try:
+        if data["opcion"] == 1:
+            query = """
+            INSERT INTO Configuraciones (color, descripcion)
+            VALUES (%s, %s)
+            """
+            values = (data['color'], data['descripcion'])
+            cursor.execute(query, values)
+        else:
+            if 'id' not in data:
+                return jsonify({'error': 'El campo id es obligatorio para actualizar'}), 400
+            query = """ 
+            UPDATE Configuraciones 
+            SET color = %s, descripcion = %s
+            WHERE id = %s 
+            """
+            values = (data['color'], data['descripcion'], data['id'])
+            cursor.execute(query, values)
+
+        mysql.connection.commit()
+        cursor.close()
+        return jsonify({'message': 'Configuración procesada exitosamente'}), 200
+    except Exception as e:
+        cursor.close()
+        print("Error al procesar la configuración:", str(e))
+        return jsonify({'error': 'Error en el servidor', 'details': str(e)}), 500
+
+
+
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)

@@ -117,7 +117,7 @@ export default {
   data() {
     return {
       isEditMode: true,
-      usuario: 0, 
+      usuario: 9, 
       images: [],
       externalImages: [
         { id: 1, capacidad: 3, name: 'Imagen 1', src: "src/assets/images/imagen1.png", width: 50, height: 50 },

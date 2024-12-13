@@ -5,7 +5,7 @@
         <template v-slot:prepend>
           <v-img :width="50" aspect-ratio="4/3" cover src="../../assets/images/findTable.png" rounded="circle"></v-img>
         </template>
-        findTable
+        SPOT2DINE
       </v-btn>
     </v-app-bar-title>
 
@@ -93,15 +93,29 @@ export default {
     };
   },
   mounted() {
+    this.fetchConfiguracion();
     // Cargar el color guardado en localStorage si existe
-    const savedColor = localStorage.getItem('appBarColor');
-    if (savedColor) {
-      this.appBarColor = savedColor;
-    }
+    
   },
   methods: {
+    async fetchConfiguracion() {
+      try {
+        const response = await fetch('http://127.0.0.1:5000/getConfiguracion');
+        if (response.ok) {
+          const data = await response.json();
+          localStorage.setItem('appBarColor', data.color);
+          const savedColor = data.color;
+          if (savedColor) {
+            this.appBarColor = savedColor;
+          }
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    },
     logout() {
       localStorage.removeItem('token');
+      localStorage.removeItem('tipoUser');
       location.reload();
     },
   },

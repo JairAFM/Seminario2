@@ -13,7 +13,7 @@
                     rounded="circle"
                     ></v-img>
                 </template> 
-                findTable
+                SPOT2DINE
             </v-btn>
         </v-app-bar-title>
         <v-spacer></v-spacer>

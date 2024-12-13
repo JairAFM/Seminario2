@@ -119,7 +119,7 @@ const router = createRouter({
 
 // Verificación global antes de acceder a rutas protegidas
 router.beforeEach((to, from, next) => {
-    document.title = 'FindTable - ' + to.name;
+    document.title = 'SPOT2DINE - ' + to.name;
     const token = localStorage.getItem('token');  // Obtener el token almacenado
     const tipoUser = localStorage.getItem('tipoUser'); // Obtener tipo de usuario
   

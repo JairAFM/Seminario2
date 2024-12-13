@@ -10,14 +10,14 @@ import numpy as np
 app = Flask(__name__)
 CORS(app)
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "C:\\Users\\User\\Desktop\\prueba_chat\\lateral-boulder-439501-f1-014fb3e367c0.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"C:\Users\jairf\OneDrive\Documentos\GitHub\Seminario2\sp2\sp2\backend\lateral-boulder-439501-f1-014fb3e367c0.json"
 vision_client = vision.ImageAnnotatorClient()
 
 # Configuración de la conexión con la base de datos
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'admin'
-app.config['MYSQL_DB'] = 'restaurantes'
+app.config['MYSQL_PASSWORD'] = 'root'
+app.config['MYSQL_DB'] = 'dbRestaurantes'
 mysql = MySQL(app)
 
 def test_db_connection():

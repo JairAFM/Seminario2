@@ -34,11 +34,11 @@
                     <v-card-text>
                         <h3>{{ formMenu.Titulo }}</h3>
                         <p class="d-inline-block text-truncate" style="max-width: 100%;">{{ formMenu.Descripcion }}</p>
-                        <p :class="formMenu.promo ? 'text-decoration-line-through' : ''"><strong>Precio: </strong>{{formatCurrency(formMenu.Precio)}}</p>
-                        <div v-if="formMenu.promo">
+                        <p :class="formMenu.Promo ? 'text-decoration-line-through' : ''"><strong>Precio: </strong>{{formatCurrency(formMenu.Precio)}}</p>
+                        <div v-if="formMenu.Promo">
                         <h4>Promocion especial</h4>
-                        <p>Del <strong>{{ formatDate(formMenu.inicio_promo) }}</strong> al <strong>{{ formatDate(formMenu.fin_promo) }}</strong></p>
-                        <p><strong>Precio: </strong>{{formatCurrency(formMenu.precio_promo)}}</p>
+                        <p>Del <strong>{{ formatDate(formMenu.FechaIni_Promo) }}</strong> al <strong>{{ formatDate(formMenu.FechaFin_Promo) }}</strong></p>
+                        <p><strong>Precio: </strong>{{formatCurrency(formMenu.Precio_Promo)}}</p>
                         </div>
                     </v-card-text>
                     <v-card-actions>
