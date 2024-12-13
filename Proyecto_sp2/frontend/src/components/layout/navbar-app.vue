@@ -43,11 +43,11 @@
         </template>
         <template v-slot:default="{ isActive }">
           <v-card class="mx-auto" min-width="500">
-            <v-card-title style="background-color: #ffe082;" class="mb-2 text-center">
+            <v-card-title :style="'background-color:' + appBarColor" class="mb-2 text-center text-none">
               Inicia Sesión
             </v-card-title>
             <v-list class="pa-3">
-              <v-form v-model="form" @submit.prevent="singIn">
+              <v-form v-model="form" @submit.prevent="signIn">
                 <v-text-field class="mb-2" v-model="email" :rules="emailRules" label="Correo Electrónico o Usuario"
                   variant="outlined" required clearable></v-text-field>
                 <v-text-field class="mb-2" v-model="password" :readonly="loading" :rules="passRules"
@@ -118,6 +118,32 @@ export default {
       localStorage.removeItem('tipoUser');
       location.reload();
     },
+    async signIn() {
+            try {
+                this.loading = true;
+                const response = await fetch('http://127.0.0.1:5000/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: this.email,
+                        password: this.password,
+                    }),
+                });
+                const data = await response.json();
+                if (response.ok && data.token) {
+                    localStorage.setItem('tipoUser', data.data.Tipo_User);
+                    localStorage.setItem('token', data.token);
+                    location.reload();
+                } else {
+                    alert(data.message || 'Login failed');
+                }
+            } catch (error) {
+                console.error('Error during login:', error);
+                alert('An error occurred during login.');
+            } finally {
+                this.loading = false;
+            }
+        },
   },
   computed: {
     isAuthenticated() {

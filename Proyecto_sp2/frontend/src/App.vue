@@ -3,7 +3,6 @@
       <v-main>
         <Layout />
       </v-main>
-      <AppFooter />
     </v-app>
   </template>
   
