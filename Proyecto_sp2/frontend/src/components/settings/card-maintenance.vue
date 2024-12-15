@@ -1,34 +1,25 @@
 <template>
-  <v-card
-    color="primary"
-    variant="elevated"
-    class="mx-auto custom-card"
-    style="width: 220px; height: auto;"
-  >
-    <v-card-item>
-      <div class="text-center">
+      <div class="card-wrap">
         <!-- Icono dinámico -->
-        <div class="d-flex justify-center">
-          <v-icon :icon="icon" size="5rem" class="custom-icon"></v-icon>
+        <div class="card-header">
+          <v-icon :icon="icon" size="5rem" class="fas fa-code"></v-icon>
         </div>
         <!-- Título -->
-        <div class="d-flex justify-center text-h6 mb-1">
-          {{ title }}
-        </div>
-        <!-- Descripción -->
-        <div class="d-flex justify-center text-caption">
-          {{ descrip }}
+        <div class="card-content">
+          <h1 class="card-title">{{ title }}</h1>
+          <!-- Descripción -->
+          <p class="card-text">{{ descrip }}</p>
+          <v-card-actions class="d-flex justify-end">
+            <!-- Botón con enlace dinámico -->
+              <div class="card-btn">
+                <v-btn :to="link">
+                  Ir
+                  <v-icon icon="mdi-location-enter"></v-icon>
+                </v-btn>
+              </div>
+          </v-card-actions>
         </div>
       </div>
-    </v-card-item>
-    <v-card-actions class="d-flex justify-end">
-      <!-- Botón con enlace dinámico -->
-      <v-btn :to="link" class="custom-btn">
-        Ir
-        <v-icon icon="mdi-location-enter"></v-icon>
-      </v-btn>
-    </v-card-actions>
-  </v-card>
 </template>
 
 <script>
@@ -43,58 +34,105 @@ export default {
 </script>
 
 <style scoped>
-.custom-card {
-  background: linear-gradient(135deg, #039CE8, #74b9ff);
-  color: white;
-  border-radius: 27px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  width: 220px; /* Ajuste del ancho */
-  height: auto; /* Ajuste automático de la altura */
+*{
+  margin:0px;
+  padding:0px;
+  box-sizing: border-box;
 }
-
-.custom-card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+:root{
+  --color-text: #616161;
+  --color-text-btn: #ffffff;
 }
-
-.custom-card::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: rgba(255, 255, 255, 0.15);
-  clip-path: circle(100px at 50% 50%);
-  transition: clip-path 0.3s ease;
-  z-index: 0;
+body{
+  font-family: 'Roboto', sans-serif;
+  background: linear-gradient(to right, #8e9eab, #eef2f3); 
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 30px;
 }
-
-.custom-card:hover::before {
-  clip-path: circle(300px at 50% 50%);
-}
-
-.custom-icon {
-  font-size: 5rem;
-  margin-bottom: 10px;
-}
-
-.custom-btn {
-  background: #ffffff;
-  color: #039CE8;
-  padding: 5px 15px;
+.card-wrap{
+  width: 220px;
+  background: #fff;
   border-radius: 20px;
-  font-size: 0.875rem;
-  font-weight: bold;
-  text-decoration: none;
-  transition: background 0.3s ease, color 0.3s ease;
+  border: 5px solid #fff;
+  overflow: hidden;
+  color: var(--color-text);
+  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px,
+              rgba(0, 0, 0, 0.23) 0px 6px 6px;
+  cursor: pointer;
+  transition: all .2s ease-in-out;
+}
+.card-wrap:hover{
+  transform: scale(1.1);
+}
+.card-header{
+  height: 200px;
+  width: 100%;
+  background: #77f454;
+  border-radius:100% 0% 100% 0% / 0% 50% 50% 100%;
+  display: grid;
+  place-items: center;
+
 }
 
-.custom-btn:hover {
-  background: #039CE8;
-  color: #ffffff;
+.card-header i{
+  color: #fff;
+  font-size: 72px;
+}
+.card-content{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 60%;
+  margin: 0 auto;
+}
+.card-title{
+  text-align: center;
+  text-transform: uppercase;
+  font-size: 16px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  
+}
+.card-text{
+  text-align: center;
+  font-size: 12px;
+  margin-bottom: 20px;
+}
+.card-btn{
+  border: none;
+  border-radius: 100px;
+  padding: 5px 30px;
+  color: #0de916;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+}
+.card-header.one{
+  background: linear-gradient(to bottom left, var(--card1-gradient-color1), var(--card1-gradient-color2));
+}
+.card-header.two{
+  background: linear-gradient(to bottom left, var(--card2-gradient-color1), var(--card2-gradient-color2));
+}
+.card-header.three{
+  background: linear-gradient(to bottom left, var(--card3-gradient-color1), var(--card3-gradient-color2));
+}
+.card-header.four{
+  background: linear-gradient(to bottom left, var(--card4-gradient-color1), var(--card4-gradient-color2));
+}
+
+.card-btn.one{
+  background: linear-gradient(to left, var(--card1-gradient-color1), var(--card1-gradient-color2));
+}
+.card-btn.two{
+  background: linear-gradient(to left, var(--card2-gradient-color1), var(--card2-gradient-color2));
+}
+.card-btn.three{
+  background: linear-gradient(to left, var(--card3-gradient-color1), var(--card3-gradient-color2));
+}
+.card-btn.four{
+  background: linear-gradient(to left, var(--card4-gradient-color1), var(--card4-gradient-color2));
 }
 </style>
