@@ -42,7 +42,7 @@
           </template>
           
           <!-- Indicador de mesa seleccionable -->
-          <div v-else class="table-number">Mesa {{ img.id }}</div>
+          <div v-else class="table-number" style="display: none;">Mesa {{ img.id }}</div>
         </div>
       </div>
 
@@ -53,7 +53,7 @@
             <v-icon color="primary" class="mr-2">mdi-table-furniture</v-icon>
             <h2>Mesas Disponibles</h2>
             <v-spacer></v-spacer>
-            <span class="helper-text">Arrastra las mesas al plano</span>
+            <span class="helper-text">Seleccione una imagen</span>
           </div>
           
           <div class="external-images-grid">
@@ -116,15 +116,17 @@ export default {
   },
   data() {
     return {
-      isEditMode: true,
-      usuario: 9, 
+      isEditMode: false,
+      usuario: 0, 
       images: [],
       externalImages: [
-        { id: 1, capacidad: 3, name: 'Imagen 1', src: "src/assets/images/imagen1.png", width: 50, height: 50 },
-        { id: 2, capacidad: 4, name: 'Imagen 2', src: "src/assets/images/imagen2.png", width: 50 },
-        { id: 3, capacidad: 6, name: 'Imagen 3', src: "src/assets/images/imagen3.png", width: 50 },
-        { id: 4, capacidad: 8, name: 'Imagen 4', src: "src/assets/images/imagen4.png", width: 50 },
-        { id: 5, capacidad: 0, name: 'Imagen 5', src: "src/assets/images/baños.png", width: 50 },
+        { id: 1, capacidad: 2, name: 'Imagen 1', src: "src/assets/images/mesa2.png", width: 50, height: 50 },
+        { id: 2, capacidad: 3, name: 'Imagen 2', src: "src/assets/images/mesa3.png", width: 50 },
+        { id: 3, capacidad: 4, name: 'Imagen 3', src: "src/assets/images/mesa4.png", width: 50 },
+        { id: 4, capacidad: 5, name: 'Imagen 4', src: "src/assets/images/mesa5.png", width: 50 },
+        { id: 5, capacidad: 6, name: 'Imagen 5', src: "src/assets/images/mesa6.png", width: 50 },
+        { id: 6, capacidad: 8, name: 'Imagen 6', src: "src/assets/images/mesa8.png", width: 50 },
+        { id: 7, capacidad: 0, name: 'Imagen 7', src: "src/assets/images/baño.png", width: 50 },
       ],
       selectedImage: null,
       mesasAgregadas: [],
@@ -136,7 +138,6 @@ export default {
     };
   },
   mounted() {
-    this.loadState(); 
     this.initializeDragAndResize();
     this.isAuthenticated();
     this.obtenerIds();
@@ -205,8 +206,8 @@ export default {
                 id: mesa.num_mesa,
                 name: externalImage.name,
                 src: externalImage.src,
-                width: 100,
-                height: 100,
+                width: 165,
+                height: 165,
                 x: mesa.posicion_x,
                 y: mesa.posicion_y,
                 capacidad: externalImage.capacidad,
@@ -235,7 +236,6 @@ export default {
     },
     async actualizarMesas(mesasData) {
       try {
-        // Verifica que el array no esté vacío
         if (!Array.isArray(mesasData) || mesasData.length === 0) {
           throw new Error("El array de mesas está vacío o no es válido");
         }
@@ -259,14 +259,53 @@ export default {
 
         const allSuccessful = results.every(response => response.ok);
 
-        if (allSuccessful) {
-          Swal.fire({
-            icon: 'success',
-            title: 'Éxito',
-            text: 'Las mesas se han guardado correctamente'
-          });
-        } else {
+        if (!allSuccessful) {
           throw new Error('Algunas mesas no pudieron ser actualizadas');
+        }
+      } catch (error) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: error.message || 'No se pudieron guardar las mesas en la base de datos'
+        });
+      }
+    },
+    async agregarMesa(mesasData) {
+      try {
+        for(let k = 0; k < mesasData.length; k++){
+          for(let m = 0; m < this.mesasAgregadas.length; m++){
+            if (mesasData[k] == this.mesasAgregadas[m].id) {
+              const mesa = this.mesasAgregadas[m];
+              const response = await fetch(`http://127.0.0.1:5000/newMesa`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  id: mesa.id, 
+                  capacidad: mesa.capacidad,
+                  posicion_x: mesa.posicion_x,
+                  posicion_y: mesa.posicion_y,
+                  imagenes: mesa.imagenes || null,
+                  num_mesa: mesa.num_mesa
+                })
+              });
+
+              const results = await Promise.all(response);
+
+              const allSuccessful = results.every(response => response.ok);
+
+              if (allSuccessful) {
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Éxito',
+                  text: 'Las mesas se han guardado correctamente new'
+                });
+              } else {
+                throw new Error('Algunas mesas no pudieron ser creadas');
+              }
+            }
+          }
         }
       } catch (error) {
         Swal.fire({
@@ -337,99 +376,19 @@ export default {
               }
               /*if(this.idDelete.length > 0){
                 
-              }
+              }*/
               if(this.idNew.length > 0){
-                
-              }*/
-              console.log("idUpdate: " + this.idUpdate);
-              console.log("idDelete: " + this.idDelete);
-              console.log("idNew: " + this.idNew);
-
-              let updatePromise;
+                this.agregarMesa(this.idNew);
+              }
               
-              /*if (checkResult.exists) {
-                console.log('Actualizando mesa existente', img.id, 'con datos:', {
-                  ...mesaData,
-                  imagenes: mesaData.imagenes ? 'Imagen presente' : 'Sin imagen'
-                });
-                
-                /*updatePromise = fetch(`http://127.0.0.1:5000/updateMesa/${img.id}`, {
-                  method: 'PUT',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify(mesaData)
-                }).then(async (response) => {
-                  if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                  }
-                  return response;
-                });*/
-
-                //updatePromises.push(updatePromise);
-              /*} else {
-                console.log('Creando nueva mesa', img.id, 'con datos:', {
-                  ...mesaData,
-                  imagenes: mesaData.imagenes ? 'Imagen presente' : 'Sin imagen'
-                });
-                
-                /*updatePromise = fetch('http://127.0.0.1:5000/newMesa', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify(mesaData)
-                }).then(async (response) => {
-                  if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                  }
-                  return response;
-                });
-
-                updatePromises.push(updatePromise);
-              }*/
             } catch (error) {
               console.error(`Error al procesar la mesa ${img.id}:`, error);
             }
           }
         }
-
-        try {
-          const responses = await Promise.all(updatePromises);
-          let allSuccessful = true;
-
-          for (const response of responses) {
-            try {
-              const data = await response.json();
-              console.log('Respuesta exitosa del servidor:', data);
-            } catch (error) {
-              console.error('Error al procesar respuesta:', error);
-              allSuccessful = false;
-            }
-          }
-
-          if (allSuccessful) {
-            Swal.fire({
-              icon: 'success',
-              title: 'Éxito',
-              text: 'Las mesas se han guardado correctamente'
-            });
-          } else {
-            throw new Error('Algunas mesas no pudieron ser guardadas');
-          }
-        } catch (error) {
-          console.error('Error al guardar las mesas:', error);
-          
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'No se pudieron guardar las mesas en la base de datos'
-          });
-        }
       }
       
       this.isEditMode = !this.isEditMode;
-      this.saveState();
       this.initializeDragAndResize();
     },
 
@@ -446,7 +405,8 @@ export default {
           onmove: this.dragMoveListener,
           enabled: this.isEditMode,
         })
-        .resizable({
+        // Remove or comment out the resizable part
+        /* .resizable({
           edges: { right: true, bottom: true },
           modifiers: [
             interact.modifiers.restrictSize({
@@ -457,7 +417,7 @@ export default {
           listeners: {
             move: (event) => this.resizeMove(event),
           },
-        });
+        }); */
     },
     dragMoveListener(event) {
       const target = event.target;
@@ -470,11 +430,16 @@ export default {
 
       const img = this.images.find(image => image.id == target.dataset.id);
       if (img) {
-        img.x = x;
-        img.y = y;
-      }
+        img.x = x; // Update the x position
+        img.y = y; // Update the y position
 
-      this.saveState();
+        // Also update the corresponding mesa in mesasAgregadas
+        const mesa = this.mesasAgregadas.find(mesa => mesa.id === img.id);
+        if (mesa) {
+          mesa.posicion_x = x; // Update the mesa's x position
+          mesa.posicion_y = y; // Update the mesa's y position
+        }
+      }
     },
 
     reserve() {
@@ -498,18 +463,30 @@ export default {
       const container = this.$refs.imageContainer;
       const containerRect = container.getBoundingClientRect();
       
-      // Calcular el centro del contenedor
-      const centerX = containerRect.width / 2 - 50;
-      const centerY = containerRect.height / 2 - 50;
+      // Calcular una posición fija o ajustada para la nueva imagen
+      const offset = 20; // Offset to avoid overlap
+      const newPositionX = containerRect.width / 2 - 82.5; // Centered position
+      const newPositionY = containerRect.height / 2 - 82.5; // Centered position
+
+      // Check for existing images to avoid overlap
+      let positionX = newPositionX;
+      let positionY = newPositionY;
+
+      // Adjust position if it overlaps with existing images
+      this.images.forEach(img => {
+        if (Math.abs(img.x - newPositionX) < 165 && Math.abs(img.y - newPositionY) < 165) {
+          positionX += offset; // Move to the right if overlapping
+        }
+      });
 
       const newImg = {
         id: externalImg.id,
         name: externalImg.name,
         src: externalImg.src,
-        width: 100,
-        height: 100,
-        x: centerX,
-        y: centerY,
+        width: 165, // Set fixed width
+        height: 165, // Set fixed height
+        x: positionX,
+        y: positionY,
         capacidad: externalImg.capacidad,
       };
       
@@ -517,17 +494,15 @@ export default {
       const mesaAgregada = {
         id: this.mesasAgregadas.length + 1,
         capacidad: externalImg.capacidad,
-        imagenes: {
-        },
-        posicion_x: centerX,
-        posicion_y: centerY,
+        imagenes: {},
+        posicion_x: positionX,
+        posicion_y: positionY,
         num_mesa: externalImg.id
       };
 
       this.mesasAgregadas.push(mesaAgregada);
 
-      console.log('Mesas Agregadasssss:', this.mesasAgregadas);
-      
+      console.log('Mesas Agregadas:', this.mesasAgregadas);
       console.log('Datos de Mesa Agregada:', mesaAgregada);
 
       this.images.push(newImg);
@@ -536,18 +511,35 @@ export default {
       this.$nextTick(() => {
         const imgElement = this.$refs.imageContainer.querySelector(`.draggable-image[data-id="${newImg.id}"]`);
         if (imgElement) {
-          imgElement.style.transform = `translate(${centerX}px, ${centerY}px)`;
-          imgElement.setAttribute('data-x', centerX);
-          imgElement.setAttribute('data-y', centerY);
+          imgElement.style.transform = `translate(${positionX}px, ${positionY}px)`;
+          imgElement.setAttribute('data-x', positionX);
+          imgElement.setAttribute('data-y', positionY);
         }
       });
-      
-      this.saveState();
     },
-
     removeImage(id) {
-      this.images = this.images.filter(img => img.id !== id);
-      this.saveState(); // Guardar estado al eliminar una imagen
+      console.log('Intentando eliminar imagen con ID:', id);
+
+      // Find the image to be deleted
+      const imgToDelete = this.images.find(img => img.id === id);
+      
+      // Log the position of the image being deleted
+      if (imgToDelete) {
+        console.log('Eliminando imagen:', imgToDelete);
+        console.log('Posición de la imagen a eliminar:', { x: imgToDelete.x, y: imgToDelete.y });
+      } else {
+        console.error('No se encontró la imagen con ID:', id);
+      }
+
+      // Eliminar solo la imagen con el ID especificado en mesasAgregadas
+      console.log("id " + id);
+      //this.images = this.images.filter(img => img.id !== id);
+
+      // También eliminar la mesa agregada correspondiente usando el mismo ID
+      this.mesasAgregadas = this.mesasAgregadas.filter(mesa => mesa.id !== id);
+
+      // Imprimir el estado actualizado de mesasAgregadas
+      console.log('Estado actualizado de mesasAgregadas:', this.mesasAgregadas);
     },
     async addImagen(id) {
       try {
@@ -642,8 +634,6 @@ export default {
           imageElement.style.width = `${img.width}px`;
           imageElement.style.height = `${img.height}px`;
         }
-
-        this.saveState(); // Guardar estado al redimensionar una imagen
       }
     },
 
@@ -653,53 +643,6 @@ export default {
         return;
       }
       event.preventDefault(); // Evita que se seleccione el texto
-    },
-
-    // Guardar el estado en localStorage
-    saveState() {
-      const state = {
-        isEditMode: this.isEditMode,
-        images: this.images.map(image => ({
-          id: image.id,
-          name: image.name,
-          src: image.src,
-          width: image.width,
-          height: image.height,
-          x: parseFloat(image.x) || 0,
-          y: parseFloat(image.y) || 0,
-          capacidad: image.capacidad
-        })),
-      };
-      localStorage.setItem('appState', JSON.stringify(state));
-    },
-
-    // Cargar el estado desde localStorage
-    loadState() {
-      const savedState = localStorage.getItem('appState');
-      if (savedState) {
-        const state = JSON.parse(savedState);
-        this.isEditMode = state.isEditMode;
-        this.images = state.images.map(image => ({
-          id: image.id,
-          name: image.name,
-          src: image.src,
-          width: image.width,
-          height: image.height,
-          x: image.x,
-          y: image.y,
-          capacidad: image.capacidad
-        }));
-        this.$nextTick(() => {
-          this.images.forEach((img) => {
-            const imgElement = this.$refs.imageContainer.querySelector(`.draggable-image[data-id="${img.id}"]`);
-            if (imgElement) {
-              imgElement.style.transform = `translate(${img.x}px, ${img.y}px)`; // Restaurar la posición
-              imgElement.setAttribute('data-x', img.x); // Actualizar el atributo de posición
-              imgElement.setAttribute('data-y', img.y); // Actualizar el atributo de posición
-            }
-          });
-        });
-      }
     },
   },
 };
@@ -738,6 +681,10 @@ export default {
   min-height: 500px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   position: relative;
+  background-image: url('../../assets/images/piso.png');
+  background-size: 100px 100px;
+  background-repeat: repeat;
+  background-position: center;
 }
 
 .external-image-container {
