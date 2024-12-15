@@ -94,18 +94,14 @@ def login():
 
     cur = mysql.connection.cursor()
 
-    # Ejecuta la consulta
     cur.execute(query, (username, username))
 
-    # Verifica si hay una fila
     result = cur.fetchone()
     if result:
-        stored_password_hash = result[1]  # Asumiendo que el hash de la contraseña está en la segunda columna
+        stored_password_hash = result[1] 
         
-        # Verifica si la contraseña es correcta
         if check_password_hash(stored_password_hash, password):
             token = create_access_token(identity=username)
-            # Excluye la contraseña antes de devolver el resultado
             user_data = {
                 "Usuario": result[0],
                 "Id_User": result[2],
@@ -139,30 +135,25 @@ def crear_cuenta():
     
     try:
         cur = mysql.connection.cursor()
-        # Inserta los datos en la tabla Clientes
         query_clientes = """
         INSERT INTO Clientes (Email, Nombres, Apellidos, Telefono, FechaCreacion, FechaActualizacion)
         VALUES (%s, %s, %s, %s, %s, %s)
         """
         now = datetime.now()
         cur.execute(query_clientes, (email, nombres, apellidos, telefono, now, now))
-        # Obtener el id del cliente recién creado
         cliente_id = cur.lastrowid
-        # Crear hash de la contraseña
         hashed_password = generate_password_hash(password)
-        # Inserta el usuario en la tabla Usuario
         query_usuario = """
         INSERT INTO Usuario (Usuario, Password, id_user, Tipo_user)
         VALUES (%s, %s, %s, %s)
         """
-        tipo_usuario = 1  # Tipo de usuario fijo (1) para este caso
+        tipo_usuario = 1  
         cur.execute(query_usuario, (email, hashed_password, cliente_id, tipo_usuario))
-        # Confirmar ambas transacciones
         mysql.connection.commit()
         return jsonify({"message": "Cuenta y usuario creados exitosamente"}), 200
     except Exception as e:
         print(f"Error al crear la cuenta: {e}")
-        mysql.connection.rollback()  # Revertir transacción en caso de error
+        mysql.connection.rollback()  
         return jsonify({"message": "Error al crear la cuenta"}), 500
 
 
@@ -283,7 +274,6 @@ def getCategories():
     cur.execute('SELECT ID, DESCRIPCION FROM dbRestaurantes.Categoria')
     rows = cur.fetchall()
     cur.close()
-    # Convert the result into a list of dictionaries
     categories = []
     for row in rows:
         category = {
@@ -291,7 +281,6 @@ def getCategories():
             "description": row[1]
         }
         categories.append(category)
-    # Return the results as a JSON response
     return jsonify(categories)
 
 #insert categorias disponibles
@@ -496,7 +485,7 @@ def newEmpleado():
         data['telefono'],
         data['puesto'],
         data['salario'],
-        nombreImagen,  # Image ID from the previous image save
+        nombreImagen,  
         now,
         now
     )
@@ -511,7 +500,6 @@ def newEmpleado():
                 idEmployee,
                 0
             )
-        # Inserta el usuario en la tabla Usuario
         query_usuario = """
         INSERT INTO Usuario (Usuario, Password, id_user, Tipo_user)
         VALUES (%s, %s, %s, %s)
@@ -615,8 +603,8 @@ def newMesa():
     cursor = mysql.connection.cursor()
     query = """
 
-    INSERT INTO Mesas (id, capacidad, posicion_x, posicion_y, imagenes)
-    VALUES (%s, %s, %s, %s, CAST(%s AS JSON))
+    INSERT INTO Mesas (id, capacidad, posicion_x, posicion_y, imagenes, num_mesa)
+    VALUES (%s, %s, %s, %s, CAST(%s AS JSON), %s)
     """
     values = (
         data['id'],
@@ -624,6 +612,7 @@ def newMesa():
         data['posicion_x'],
         data['posicion_y'],
         data['imagenes'],
+        data['num_mesa'],
     )
     try:
         cursor.execute(query, values)
@@ -631,7 +620,7 @@ def newMesa():
         cursor.close()
         return jsonify({'message': 'Mesa creada exitosamente'}), 200
     except Exception as e:
-        print("Error al crear mesa:", str(e))  # Para debug
+        print("Error al crear mesa:", str(e))  
         cursor.close()
         return jsonify({'error': str(e)}), 500
 
@@ -1006,7 +995,7 @@ def ver_reservas(id):
 
         return jsonify(reservas), 200
     except Exception as e:
-        print("Error al obtener reservas:", str(e))  # Para debug
+        print("Error al obtener reservas:", str(e))  
         cursor.close()
         return jsonify({'error': str(e)}), 500
 
@@ -1078,13 +1067,6 @@ def delete_mesa(id):
             'error': 'Error al eliminar la mesa',
             'details': str(e)
         }), 500
-	    
-@app.route('/ar')
-def ar_view():
-    image = request.args.get('image')
-    # Aquí puedes validar o ajustar la imagen si es necesario
-    return send_from_directory(os.path.join(app.root_path, 'static', 'img'), image)
-
 
 @app.route('/getConfiguracion', methods=['GET'])
 def getConfiguracion():
@@ -1159,7 +1141,40 @@ def configTr():
         print("Error al procesar la configuración:", str(e))
         return jsonify({'error': 'Error en el servidor', 'details': str(e)}), 500
 
-
-
+@app.route('/obtenerMesa/<int:id>', methods=['GET'])
+def get_mesa(id):
+    try:
+        cursor = mysql.connection.cursor()
+        
+        # Consulta para obtener la mesa por el id recibido
+        query = """
+        SELECT capacidad, imagenes, posicion_x, posicion_y, num_mesa
+        FROM dbRestaurantes.mesas
+        WHERE id = %s
+        """
+        
+        cursor.execute(query, (id,))
+        mesa = cursor.fetchone()  # Obtenemos una sola fila (mesa)
+        cursor.close()
+        
+        if mesa:
+            mesa_dict = {
+                'id': id,
+                'capacidad': mesa[0],
+                'imagenes': mesa[1],
+                'posicion_x': mesa[2],
+                'posicion_y': mesa[3],
+                'num_mesa': mesa[4]
+            }
+            return jsonify(mesa_dict), 200
+        else:
+            return jsonify({
+                'message': 'Mesa no encontrada'
+            }), 404
+    except Exception as e:
+        return jsonify({
+            'message': f'Error al obtener la mesa: {str(e)}'
+        }), 500
+        
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000)
