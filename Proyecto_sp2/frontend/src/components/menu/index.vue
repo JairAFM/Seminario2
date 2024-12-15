@@ -1,6 +1,25 @@
 <template>
     <v-container>
-      <!-- Carousel for promotional menus -->
+      <v-row class="mt-5 d-flex justify-center">
+        <h2 class="promo-title">Nuestro Menú </h2>
+      </v-row>
+      
+      <v-row class="mt-5 d-flex justify-center">
+        <v-col cols="12" md="3"  v-for="category in categories" :key="category.name" class="category-container">
+          <div class="container">
+            <div class="box">
+              <div class="top-bar"></div>
+              <div class="content">
+                <a :href="'/categoria/' + category.id">
+                  <v-img :src="category.image" class="category-image"></v-img>
+                  <strong class="category-title">{{ category.name }}</strong>
+                </a>
+              </div>
+            </div>
+          </div>
+        </v-col>
+      </v-row>
+
        <template v-if="verPromos">
         <v-carousel hide-delimiters height="400px" show-arrows>
           <v-carousel-item
@@ -26,19 +45,6 @@
           </v-col>
         </v-row>
       </template>
-  
-      <v-row class="mt-5 d-flex justify-center">
-        <h2 class="promo-title">Deleitate con nuestros menus</h2>
-      </v-row>
-      <!-- Menu category selection like the image -->
-      <v-row class="mt-5 d-flex justify-center">
-        <v-col cols="12" md="3"  v-for="category in categories" :key="category.name" class="category-container">
-          <a :href="'/categoria/' + category.id">
-            <v-img :src="category.image" class="category-image"></v-img>
-            <p class="category-title">{{ category.name }}</p>
-          </a>
-        </v-col>
-      </v-row>
     </v-container>
   </template>
   
@@ -171,4 +177,153 @@
     color: black;
     margin-top: 10px;
   }
-  </style>
+
+  *{
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+}
+
+body{
+    width: 100%;
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #b8dae3;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+}
+a{
+    text-decoration: none;
+}
+
+
+.h1-text{
+    font-size: 1.3rem;
+    margin: 40px 0;
+    color: #2c2c2c;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.h1-text i{
+    background-color: #509bfc;
+    color: #fff;
+    width: 40px;
+    height: 40px;
+    box-shadow: 2px 5px 30px rgba(80, 123, 252, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1rem;
+    margin: 0 20px;
+}
+
+ .container{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+} 
+
+
+.box{
+    position: relative;
+    min-width: 250px;
+    background-color: #fff;
+    box-shadow: 2px 3px 30px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    margin: 20px;
+    position: relative;
+    border-radius: 10px;
+}
+
+
+.top-bar{
+    width: 50%;
+    height: 4px;
+    background: #507bfc;
+    position: absolute;
+    top: 0px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 0px 0px 10px 10px;
+}
+
+.top{
+    display: flex;
+    justify-content: space-between;
+    align-items:center ;
+    width: 100%;
+}
+
+.fa-check-circle{
+    color: #17b667;
+}
+
+/* creating heart */
+ .heart{
+    color: rgba(155,155,155);
+}
+.heart::before{
+    content: '\f004';
+    font-family: fontawesome;
+    line-height: 30px;
+    cursor: pointer;
+    z-index: 1;
+    transition: all 0.3s;
+}
+.box .heart-btn:checked ~ .heart::before{
+    color:#e41934
+}
+.heart-btn{
+    position: absolute;
+    top: 25px;
+    right: 20px;
+    padding: 1rem;
+    display: none;
+}
+
+
+.content img{
+    width: 90px;
+    height: 90px;
+    border-radius:100px;
+    overflow: hidden;
+    object-fit: cover;
+    object-position: top;
+}
+.content{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.content strong{
+    font-weight: 500;
+    color: #141414;
+    margin-top: 10px;
+}
+.content p{
+    font-size: 0.9rem;
+    color: #7a7a7a;
+    margin: 4px 0px 10px 0px;
+    cursor: pointer;
+}
+.content p:hover{
+    text-decoration: underline;
+}
+
+.category-image {
+  border-radius: 50%;
+  object-fit: cover;
+}
+</style>
