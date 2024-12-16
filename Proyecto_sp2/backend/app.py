@@ -1109,7 +1109,6 @@ def getConfiguracion():
 def configTr():
     data = request.json
 
-    # Validación de campos
     if 'opcion' not in data or 'color' not in data or 'descripcion' not in data:
         return jsonify({'error': 'Faltan parámetros en la solicitud'}), 400
 
@@ -1146,7 +1145,6 @@ def get_mesa(id):
     try:
         cursor = mysql.connection.cursor()
         
-        # Consulta para obtener la mesa por el id recibido
         query = """
         SELECT capacidad, imagenes, posicion_x, posicion_y, num_mesa
         FROM dbRestaurantes.mesas
@@ -1154,7 +1152,7 @@ def get_mesa(id):
         """
         
         cursor.execute(query, (id,))
-        mesa = cursor.fetchone()  # Obtenemos una sola fila (mesa)
+        mesa = cursor.fetchone()  
         cursor.close()
         
         if mesa:
