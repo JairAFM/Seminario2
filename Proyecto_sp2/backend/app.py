@@ -933,12 +933,15 @@ def get_mesas():
         cursor = mysql.connection.cursor()
         
         query = """
-        SELECT * 
-        FROM dbRestaurantes.mesas
+        SELECT id, capacidad, imagenes, posicion_x, posicion_y, num_mesa, 
+               (SELECT COUNT(*) 
+                FROM dbrestaurantes.reservaciones b  
+                WHERE b.id_mesa = mesas.id) AS ocupada
+        FROM dbrestaurantes.mesas;
         """
         
         cursor.execute(query)
-        mesas = cursor.fetchall()  
+        mesas = cursor.fetchall()
         cursor.close()
         
         if mesas:
@@ -950,13 +953,16 @@ def get_mesas():
                     'imagenes': mesa[2],
                     'posicion_x': mesa[3],
                     'posicion_y': mesa[4],
-                    'num_mesa': mesa[5]
+                    'num_mesa': mesa[5],
+                    'ocupada': mesa[6]  
                 })
             return jsonify(mesas_list), 200
         else:
             return jsonify({
                 'message': 'No se encontraron mesas'
             }), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
             
     except Exception as e:
         print(f"Error al obtener las mesas: {str(e)}")

@@ -11,10 +11,9 @@
         viewer: null,
         vistasMap: {
           1: 'src/assets/images/restaurante_prot.jpg',
-          2: 'src/assets/images/vistas/foto2.jpeg',
+          2: 'src/assets/images/vistas/foto5.jpeg',
           3: 'src/assets/images/vistas/foto3.jpeg',
-          4: 'src/assets/images/vistas/foto4.jpeg',
-          // Añade más mapeos según necesites
+          4: 'src/assets/images/vistas/foto4.jpeg'
         }
       }
     },
@@ -22,8 +21,7 @@
       createPanorama(mesaId) {
         const panoramaContainer = document.getElementById('panorama-container');
         const imagePath = this.vistasMap[mesaId] || 'src/assets/images/vistas/foto4.jpeg';
-        
-        // Si existe un viewer anterior, lo destruimos
+
         if (this.viewer) {
           this.viewer.dispose();
           this.viewer = null;
@@ -48,7 +46,6 @@
       }
     },
     beforeDestroy() {
-      // Limpiamos el viewer cuando el componente se destruye
       if (this.viewer) {
         this.viewer.dispose();
         this.viewer = null;
@@ -56,8 +53,5 @@
     }
   };
   </script>
-  
-  <style scoped>
-  /* Añade estilos si es necesario */
-  </style>
+
   
