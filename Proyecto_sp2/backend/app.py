@@ -11,6 +11,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import JWTManager, create_access_token
 import base64
 import openai
+from decimal import Decimal
 
 app = Flask(__name__)
 
@@ -20,6 +21,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 CORS(app)
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "..\\lateral-boulder-439501-f1-014fb3e367c0.json"
+#os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "./lateral-boulder-439501-f1-014fb3e367c0.json"
 
 # Inicializar el cliente de Google Vision
 vision_client = vision.ImageAnnotatorClient()
@@ -31,6 +33,7 @@ openai.api_key = "sk-proj-6ybHEshsDbukfp_LE-C7PGM-ZaYSp-FuAdkOrVM8J8sV-WfYx7k4uB
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = 'admin'
+#app.config['MYSQL_PASSWORD'] = 'root'
 app.config['MYSQL_DB'] = 'dbRestaurantes'
 mysql = MySQL(app)
 
@@ -1109,7 +1112,6 @@ def getConfiguracion():
 def configTr():
     data = request.json
 
-    # Validación de campos
     if 'opcion' not in data or 'color' not in data or 'descripcion' not in data:
         return jsonify({'error': 'Faltan parámetros en la solicitud'}), 400
 
@@ -1146,7 +1148,6 @@ def get_mesa(id):
     try:
         cursor = mysql.connection.cursor()
         
-        # Consulta para obtener la mesa por el id recibido
         query = """
         SELECT capacidad, imagenes, posicion_x, posicion_y, num_mesa
         FROM dbRestaurantes.mesas
@@ -1154,7 +1155,7 @@ def get_mesa(id):
         """
         
         cursor.execute(query, (id,))
-        mesa = cursor.fetchone()  # Obtenemos una sola fila (mesa)
+        mesa = cursor.fetchone()  
         cursor.close()
         
         if mesa:
@@ -1175,6 +1176,156 @@ def get_mesa(id):
         return jsonify({
             'message': f'Error al obtener la mesa: {str(e)}'
         }), 500
+
+@app.route('/actualizar_capacidad/<int:id>', methods=['PUT'])
+def actualizar_capacidad(id):
+    data = request.json  
+    cursor = mysql.connection.cursor()
+    
+    query = """
+    UPDATE dbRestaurantes.mesas
+    SET capacidad = %s
+    WHERE id = %s
+    """
+    values = (data['capacidad'], id)
+    
+    try:
+        cursor.execute(query, values)  
+        mysql.connection.commit()  
+        cursor.close()
+        return jsonify({'message': f'Mesa con id {id} actualizada exitosamente'}), 200
+    except Exception as e:
+        cursor.close()
+        return jsonify({'error': str(e)}), 500
         
+
+
+# Endpoint para consultar información de las órdenes
+@app.route('/getOrdenes', methods=['GET'])
+def getOrdenes():
+    try:
+        cursor = mysql.connection.cursor()
+        query = """
+        SELECT o.Id, o.Id_Cliente, o.Id_Empleado, o.Id_Tipo, o.Fecha, o.Total,
+               od.Id_Menu, od.Cantidad, od.Precio
+        FROM Ordenes o
+        LEFT JOIN Orden_Detalle od ON o.Id = od.Id_Orden
+        """
+        cursor.execute(query)
+        ordenes = cursor.fetchall()
+        cursor.close()
+
+        # Estructurar la respuesta en un formato comprensible
+        result = []
+        for orden in ordenes:
+            result.append({
+                'Id': orden[0],
+                'Id_Cliente': orden[1],
+                'Id_Empleado': orden[2],
+                'Id_Tipo': orden[3],
+                'Fecha': orden[4],
+                'Total': float(orden[5]),
+                'Detalle': {
+                    'Id_Menu': orden[6],
+                    'Cantidad': orden[7],
+                    'Precio': float(orden[8]) if orden[8] else None
+                }
+            })
+
+        return jsonify(result), 200
+    except Exception as e:
+        print(f"Error al obtener las órdenes: {str(e)}")
+        return jsonify({'error': 'Error al obtener las órdenes', 'details': str(e)}), 500
+
+@app.route('/guardarOrden', methods=['POST'])
+def guardarOrden():
+    try:
+        # Obtener datos del cuerpo de la solicitud
+        data = request.json
+
+        # Cargar el detalle de la orden
+        dataDeetallee = json.loads(data["Detalle"])
+
+        # Preparar la fecha actual
+        now = datetime.now()
+
+        # Convertir el total a decimal con precisión
+        decimal_value = Decimal(data['Total']).quantize(Decimal("0.00"))
+
+        # Crear el cursor para MySQL
+        cursor = mysql.connection.cursor()
+
+        # Insertar en la tabla Ordenes
+        query_orden = """
+        INSERT INTO Ordenes (Id_Cliente, Id_Empleado, Id_Tipo, Fecha, Total)
+        VALUES (%s, %s, %s, %s, %s)
+        """
+        values_orden = (data['Id_Cliente'], 1, 1, now, float(data['Total']),)
+        cursor.execute(query_orden, values_orden)
+        id_orden = cursor.lastrowid
+
+        # Insertar los detalles de la orden
+        query_detalle = """
+        INSERT INTO Orden_Detalle (Id_Orden, Id_Menu, Cantidad, Precio)
+        VALUES (%s, %s, %s, %s)
+        """
+        for detalle in dataDeetallee:
+            # Calcular el precio final basado en Promo
+            final_price = float(detalle["Precio_Promo"]) if detalle["Promo"] and detalle["Precio_Promo"] else float(detalle["Precio"])
+            values_detalle = (id_orden, detalle['Id'], detalle['cantidad'], final_price)
+            cursor.execute(query_detalle, values_detalle)
+
+        # Confirmar la transacción
+        mysql.connection.commit()
+        cursor.close()
+
+        return jsonify({'message': 'Orden guardada exitosamente', 'Id_Orden': id_orden}), 201
+
+    except Exception as e:
+        # Manejar excepciones y rollback en caso de error
+        mysql.connection.rollback()
+        print(f"Error al guardar la orden: {str(e)}")
+        return jsonify({'error': 'Error al guardar la orden', 'details': str(e)}), 500
+
+# Endpoint para actualizar una orden
+@app.route('/actualizarOrden', methods=['PUT'])
+def actualizarOrden():
+    data = request.json
+    if 'Id' not in data or 'Id_Cliente' not in data or 'Id_Empleado' not in data or 'Id_Tipo' not in data or 'Total' not in data or 'Detalle' not in data:
+        return jsonify({'error': 'Faltan parámetros en la solicitud'}), 400
+
+    try:
+        cursor = mysql.connection.cursor()
+
+        # Actualizar la orden
+        query_orden = """
+        UPDATE Ordenes
+        SET Id_Cliente = %s, Id_Empleado = %s, Id_Tipo = %s, Total = %s
+        WHERE Id = %s
+        """
+        values_orden = (data['Id_Cliente'], data['Id_Empleado'], data['Id_Tipo'], data['Total'], data['Id'])
+        cursor.execute(query_orden)
+
+        # Eliminar los detalles anteriores
+        query_delete_detalle = "DELETE FROM Orden_Detalle WHERE Id_Orden = %s"
+        cursor.execute(query_delete_detalle, (data['Id'],))
+
+        # Insertar los nuevos detalles
+        query_detalle = """
+        INSERT INTO Orden_Detalle (Id_Orden, Id_Menu, Cantidad, Precio)
+        VALUES (%s, %s, %s, %s)
+        """
+        for detalle in data['Detalle']:
+            values_detalle = (data['Id'], detalle['Id_Menu'], detalle['Cantidad'], detalle['Precio'])
+            cursor.execute(query_detalle)
+
+        mysql.connection.commit()
+        cursor.close()
+
+        return jsonify({'message': 'Orden actualizada exitosamente'}), 200
+    except Exception as e:
+        print(f"Error al actualizar la orden: {str(e)}")
+        return jsonify({'error': 'Error al actualizar la orden', 'details': str(e)}), 500
+
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)

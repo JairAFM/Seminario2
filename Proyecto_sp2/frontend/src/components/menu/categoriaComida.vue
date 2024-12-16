@@ -42,7 +42,7 @@
                         </div>
                     </v-card-text>
                     <v-card-actions>
-                    <v-btn color="yellow darken-4">
+                    <v-btn color="yellow-darken-3" @click="addCart(formMenu)">
                         ¡Ordenar Ahora!
                         <v-icon right>mdi-cart</v-icon>
                     </v-btn>
@@ -153,6 +153,36 @@ export default {
             return null;
         }
     },
+    addCart(data) {
+        // Get the existing array from localStorage
+        let existingArray = JSON.parse(localStorage.getItem("shopCart")) || [];
+        if (existingArray.length > 0) {
+            const filter = existingArray.filter(k => k.Id == data.Id);
+            if (filter.length > 0) {
+                existingArray = existingArray.map((value, index) => {
+                    if (value.Id == data.Id) {
+                        value.cantidad = value.cantidad + 1;
+                    }
+                    return value;
+                });
+                localStorage.setItem("shopCart", JSON.stringify(existingArray));
+            } else {
+                data.cantidad = 1;
+                existingArray.push(data);
+                localStorage.setItem("shopCart", JSON.stringify(existingArray));
+            }
+        } else  {
+            let arrayData = [];
+            data.cantidad = 1;
+            arrayData.push(data);
+            localStorage.setItem("shopCart", JSON.stringify(arrayData));
+        }
+        Swal.fire({
+                title: '¡Ordenado!',
+                text: 'Platillo agregado a su carrito!',
+                icon: 'success'
+            });
+    }
   },
 };
 </script>

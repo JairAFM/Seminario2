@@ -18,18 +18,6 @@
             return {
                 mantenimientos: [
                     {
-                        title: 'Categorias',
-                        descrip: 'Gestiona eficientemente las categorías para tu menú',
-                        link: '/maintenances/categories',
-                        icon: 'mdi-shape'
-                    },
-                    {
-                        title: 'menú',
-                        descrip: 'Gestiona eficientemente el menú de tu restaurante',
-                        link: '/maintenances/menu',
-                        icon: 'mdi-silverware'
-                    },
-                    {
                         title: 'Configuración',
                         descrip: 'Gestiona la información y apariencia de tu restaurante',
                         link: '/maintenances/tables',
@@ -46,6 +34,18 @@
                         descrip: 'Gestiona eficientemente a tus empleados para obtener un mejor rendimiento',
                         link: '/maintenances/employees',
                         icon: 'mdi-account-group'
+                    },
+                    {
+                        title: 'Categorias',
+                        descrip: 'Gestiona eficientemente las categorías para tu menú',
+                        link: '/maintenances/categories',
+                        icon: 'mdi-shape'
+                    },
+                    {
+                        title: 'menú',
+                        descrip: 'Gestiona eficientemente el menú de tu restaurante',
+                        link: '/maintenances/menu',
+                        icon: 'mdi-silverware'
                     },
                     {
                         title: 'Estados',

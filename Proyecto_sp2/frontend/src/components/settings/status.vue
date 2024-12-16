@@ -38,11 +38,6 @@
               label="Descripción"
               required
             ></v-text-field>
-            <v-text-field
-              v-model="form.capacity"
-              label="Capacidad"
-              required
-            ></v-text-field>
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
@@ -61,7 +56,6 @@ export default {
       headers: [
         { title: 'ID', key: 'id' },
         { title: 'Descripción', key: 'description' },
-        { title: 'Capacidad', key: 'capacity' },
         { title: 'Acciones', align: 'center', key: 'actions', sortable: false },
       ],
       categories: [
