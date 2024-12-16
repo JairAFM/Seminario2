@@ -46,6 +46,7 @@
 
 <script>
 import axios from 'axios';
+import Swal from 'sweetalert2';
 
 export default {
   name: 'ReservationForm',
@@ -65,12 +66,13 @@ export default {
       minTime: '00:00',
       maxTime: '23:59',
       isTimeDisabled: false,
-      mesaCapacidad: null,
+      mesaCapacidad: 2,
       guestCount: '',
       userId: null,
       mesaId: 0, 
       ordenId: null,
-      tipoUser: null
+      tipoUser: null,
+      capacidad_t: 0
     };
   },
   async created() {
@@ -82,7 +84,7 @@ export default {
     console.log("id user " + this.userId);
     
     try {
-      const response = await fetch(`http://127.0.0.1:5000/getMesas/${this.mesaId}`);
+      const response = await fetch(`http://127.0.0.1:5000/obtenerMesa/${this.mesaId}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -144,7 +146,6 @@ export default {
         this.maxTime = '23:59';
         this.isTimeDisabled = false;
 
-        // Limpiar la hora si es menor a la actual
         if (this.reservation.startTime && this.reservation.startTime < this.minTime) {
           this.reservation.startTime = '';
           this.isTimeDisabled = true;
@@ -189,7 +190,7 @@ export default {
         id_orden: this.ordenId,
         inicio: `${this.reservation.date}T00:00:00`, 
         hora: this.reservation.startTime, 
-        no_personas: this.guestCount,
+        no_personas: 2,
         id_estado: 1
       };
 
@@ -197,6 +198,11 @@ export default {
 
       axios.post('http://localhost:5000/reservaciones', dataToSend)
         .then(response => {
+          Swal.fire({
+            icon: 'success',
+            title: 'Éxito',
+            text: 'Mesas actualizadas'
+          });  
           console.log("Reserva creada con éxito:", response.data);
         })
         .catch(error => {
