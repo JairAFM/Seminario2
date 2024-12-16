@@ -12,6 +12,7 @@ import Employees from './components/settings/employees.vue'
 import Tables from './components/settings/tables.vue'
 import Menu from './components/settings/menuRest.vue'
 import menuCategory from './components/menu/categoriaComida.vue'
+import DetallesReserva from './components/components_reserva/Detalles_reserva.vue'
 
 import ReservationPlane from './components/components_reserva/ReservationPlane.vue'; 
 import ReservationForm from './components/components_reserva/ReservationForm.vue'; 
@@ -67,7 +68,7 @@ const routes = [
     },
     {
         path: '/maintenances/tables',
-        name: 'Configuracion',
+        name: 'Mesas',
         meta: { requiresAuth: true, requiresPermission: true },
         component: Tables,
     },
@@ -97,6 +98,11 @@ const routes = [
         name: 'Foto',
         component: FotoForm,
       },
+      {
+        path: '/detallesReserva',
+        name: 'DetalleReserva',
+        component: DetallesReserva,
+      },
       /*{
         path: '/reservation/reservation-details/:id', 
           component: ReservationDetails,
@@ -116,7 +122,7 @@ const router = createRouter({
 
 // Verificación global antes de acceder a rutas protegidas
 router.beforeEach((to, from, next) => {
-    document.title = 'SPOT2DINE - ' + to.name;
+    document.title = 'FindTable - ' + to.name;
     const token = localStorage.getItem('token');  // Obtener el token almacenado
     const tipoUser = localStorage.getItem('tipoUser'); // Obtener tipo de usuario
   
