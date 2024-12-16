@@ -11,7 +11,7 @@
         viewer: null,
         vistasMap: {
           1: 'src/assets/images/restaurante_prot.jpg',
-          2: 'src/assets/images/vistas/foto2.jpeg',
+          2: 'src/assets/images/vistas/foto5.jpeg',
           3: 'src/assets/images/vistas/foto3.jpeg',
           4: 'src/assets/images/vistas/foto4.jpeg',
           // Añade más mapeos según necesites
