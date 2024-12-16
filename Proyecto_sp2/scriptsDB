@@ -137,3 +137,6 @@ MODIFY id_orden int NULL;
 
 ALTER TABLE `mesas`
 ADD COLUMN `num_mesa` INT DEFAULT NULL;
+
+ALTER TABLE `reservaciones`
+ADD COLUMN `hora` time DEFAULT NULL;
