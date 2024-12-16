@@ -18,10 +18,10 @@
           v-for="img in images"
           :key="img.id"
           class="draggable-image"
-          :class="{ 'selectable': !isEditMode }"
+          :class="{ 'selectable': !isEditMode && img.capacidad > 0 }"
           :style="{ width: img.width + 'px', height: img.height + 'px' }"
           :data-id="img.id"
-          @click="handleImageClick(img)"
+          @click="!isEditMode && img.capacidad > 0 ? handleImageClick(img) : null"
         >
           <img 
             :src="img.src" 
@@ -32,8 +32,11 @@
           <template v-if="isEditMode">
             <div class="resize-handle" @mousedown.stop="initResize($event, img)"></div>
             <div class="button-container">
-              <button class="action-button delete-button" @click.stop="removeImage(img.id)">
+              <button class="action-button delete-button" @click.stop="eliminarMesaLista(img.id)">
                 <v-icon color="white">mdi-delete</v-icon>
+              </button>
+              <button class="action-button manage-capacity-button" @click.stop="cambiarCapacidad(img.id)">
+                <v-icon color="white">mdi-pencil</v-icon>
               </button>
               <button class="action-button add-image-button" @click.stop="addImagen(img.id)">
                 <v-icon color="white">mdi-camera-plus</v-icon>
@@ -120,13 +123,13 @@ export default {
       usuario: 0, 
       images: [],
       externalImages: [
-        { id: 1, capacidad: 2, name: 'Imagen 1', src: "src/assets/images/mesa2.png", width: 50, height: 50 },
-        { id: 2, capacidad: 3, name: 'Imagen 2', src: "src/assets/images/mesa3.png", width: 50 },
-        { id: 3, capacidad: 4, name: 'Imagen 3', src: "src/assets/images/mesa4.png", width: 50 },
-        { id: 4, capacidad: 5, name: 'Imagen 4', src: "src/assets/images/mesa5.png", width: 50 },
-        { id: 5, capacidad: 6, name: 'Imagen 5', src: "src/assets/images/mesa6.png", width: 50 },
-        { id: 6, capacidad: 8, name: 'Imagen 6', src: "src/assets/images/mesa8.png", width: 50 },
-        { id: 7, capacidad: 0, name: 'Imagen 7', src: "src/assets/images/baño.png", width: 50 },
+        { num_mesa: 1, capacidad: 2, name: 'Imagen 1', src: "src/assets/images/mesa2.png", width: 50, height: 50 },
+        { num_mesa: 2, capacidad: 3, name: 'Imagen 2', src: "src/assets/images/mesa3.png", width: 50 },
+        { num_mesa: 3, capacidad: 4, name: 'Imagen 3', src: "src/assets/images/mesa4.png", width: 50 },
+        { num_mesa: 4, capacidad: 5, name: 'Imagen 4', src: "src/assets/images/mesa5.png", width: 50 },
+        { num_mesa: 5, capacidad: 6, name: 'Imagen 5', src: "src/assets/images/mesa6.png", width: 50 },
+        { num_mesa: 6, capacidad: 8, name: 'Imagen 6', src: "src/assets/images/mesa8.png", width: 50 },
+        { num_mesa: 7, capacidad: 0, name: 'Imagen 7', src: "src/assets/images/baño.png", width: 50 },
       ],
       selectedImage: null,
       mesasAgregadas: [],
@@ -144,7 +147,6 @@ export default {
     this.obtenerMesas();
   },
   methods: {
-    //verificacion de usuario
     isAuthenticated() {
       this.usuario = localStorage.getItem('tipoUser');
     },
@@ -180,30 +182,30 @@ export default {
       if (mesasO.ok) {
         const data = await mesasO.json(); 
         this.mesasObtenidas = data; 
-        
-        this.mesasAgregadas = data.map(mesa => ({
-          id: mesa.id,
-          capacidad: mesa.capacidad,
-          imagenes: mesa.imagenes ? JSON.stringify({
-            nombre: mesa.imagenes.nombre || 'Mesa imagen',
-            base64: mesa.imagenes.base64
-          }) : null,
-          posicion_x: mesa.posicion_x,
-          posicion_y: mesa.posicion_y,
-          num_mesa: mesa.num_mesa
-        }));
+        this.mesasAgregadas = [];
+        this.mesasAgregadas = data.map(mesa => {
+          return {
+            id: mesa.id,
+            capacidad: mesa.capacidad,
+            imagenes: mesa.imagenes ? JSON.stringify({
+              nombre: mesa.imagenes.nombre,
+              base64: mesa.imagenes.base64
+            }) : null,
+            posicion_x: mesa.posicion_x,
+            posicion_y: mesa.posicion_y,
+            num_mesa: mesa.num_mesa
+          };
+        });
 
-        // Colocar imágenes en el plano
         this.$nextTick(() => {
           this.mesasAgregadas.forEach(mesa => {
-            // Buscar imagen externa que coincida con num_mesa
             const externalImage = this.externalImages.find(
-              img => img.id === mesa.num_mesa
+              img => img.num_mesa === mesa.num_mesa
             );
 
             if (externalImage) {
               const newImg = {
-                id: mesa.num_mesa,
+                id: mesa.id,
                 name: externalImage.name,
                 src: externalImage.src,
                 width: 165,
@@ -211,11 +213,11 @@ export default {
                 x: mesa.posicion_x,
                 y: mesa.posicion_y,
                 capacidad: externalImage.capacidad,
+                num_mesa: mesa.num_mesa
               };
 
               this.images.push(newImg);
 
-              // Esperar a que el DOM se actualice y posicionar la imagen
               this.$nextTick(() => {
                 const imgElement = this.$refs.imageContainer.querySelector(`.draggable-image[data-id="${newImg.id}"]`);
                 if (imgElement) {
@@ -228,18 +230,14 @@ export default {
           });
         });
 
-        console.log("Array de Mesas: ", this.mesasObtenidas);
-        console.log("Mesas Agregadas: ", this.mesasAgregadas);
+        /*console.log("Array de Mesas: ", this.mesasObtenidas);
+        console.log("Mesas Agregadas: ", this.mesasAgregadas);*/
       } else {
         console.error("Error al obtener las mesas");
       }
     },
     async actualizarMesas(mesasData) {
       try {
-        if (!Array.isArray(mesasData) || mesasData.length === 0) {
-          throw new Error("El array de mesas está vacío o no es válido");
-        }
-
         const promises = mesasData.map(mesa =>
           fetch(`http://127.0.0.1:5000/editMesa/${mesa.id}`, {
             method: 'PUT',
@@ -250,7 +248,8 @@ export default {
               capacidad: mesa.capacidad,
               posicion_x: mesa.posicion_x,
               posicion_y: mesa.posicion_y,
-              imagenes: mesa.imagenes || null
+              imagenes: mesa.imagenes,
+              num_mesa: mesa.num_mesa
             })
           })
         );
@@ -260,14 +259,10 @@ export default {
         const allSuccessful = results.every(response => response.ok);
 
         if (!allSuccessful) {
-          throw new Error('Algunas mesas no pudieron ser actualizadas');
+          console.log("error");
         }
       } catch (error) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: error.message || 'No se pudieron guardar las mesas en la base de datos'
-        });
+        console.log("error");
       }
     },
     async agregarMesa(mesasData) {
@@ -286,7 +281,7 @@ export default {
                   capacidad: mesa.capacidad,
                   posicion_x: mesa.posicion_x,
                   posicion_y: mesa.posicion_y,
-                  imagenes: mesa.imagenes || null,
+                  imagenes: mesa.imagenes,
                   num_mesa: mesa.num_mesa
                 })
               });
@@ -296,28 +291,47 @@ export default {
               const allSuccessful = results.every(response => response.ok);
 
               if (allSuccessful) {
-                Swal.fire({
-                  icon: 'success',
-                  title: 'Éxito',
-                  text: 'Las mesas se han guardado correctamente new'
-                });
+                console.log("exitoso");
               } else {
-                throw new Error('Algunas mesas no pudieron ser creadas');
+                console.log("error");
               }
             }
           }
         }
       } catch (error) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: error.message || 'No se pudieron guardar las mesas en la base de datos'
-        });
+        console.log("error");
+      }
+    },
+    async eliminarMesas(mesasData) {
+
+      try {
+        for (let k = 0; k < mesasData.length; k++) {
+          const mesaId = mesasData[k];
+          const promises = mesasData.map(mesa => 
+            fetch(`http://127.0.0.1:5000/deleteMesa/${mesaId}`, {
+              method: 'DELETE',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+              })
+            })
+          );
+
+          const results = await Promise.all(promises);
+          const allSuccessful = results.every(response => response.ok);
+          if (!allSuccessful) {
+            throw new Error('Algunas mesas no pudieron ser eliminadas');
+          } else {
+            console.log("kk " + deletedIds + " mmm " + mesaId);
+          }
+        }
+      } catch (error) {
+        console.log("error");
       }
     },
     async toggleEditMode() {
       if (this.isEditMode) {  
-        const updatePromises = [];
 
         for (const img of this.images) {
           const element = this.$refs.imageContainer.querySelector(`.draggable-image[data-id="${img.id}"]`);
@@ -326,14 +340,14 @@ export default {
             const y = parseFloat(element.getAttribute('data-y')) || 0;
             
             try {
-              //const checkResult = await obtenerIds.json();
               
               const mesaData = {
                 id_mesa: img.id,
                 capacidad: img.capacidad,
                 posicion_x: Math.round(x),
                 posicion_y: Math.round(y),
-                imagenes: null
+                imagenes: null,
+                num_mesa: img.num_mesa
               };
 
               // Se actualiza la imagen si se selecciona una
@@ -369,23 +383,26 @@ export default {
                   addIfNotExists(this.idNew, mesasAgregadasItem); 
                 }
               }
-
-
-              if(this.idUpdate.length > 0){
-               this.actualizarMesas(this.idUpdate);
-              }
-              /*if(this.idDelete.length > 0){
-                
-              }*/
-              if(this.idNew.length > 0){
-                this.agregarMesa(this.idNew);
-              }
-              
             } catch (error) {
               console.error(`Error al procesar la mesa ${img.id}:`, error);
             }
           }
         }
+        if(this.idUpdate.length > 0){
+          this.actualizarMesas(this.idUpdate);
+        }
+        if(this.idDelete.length > 0){
+          this.eliminarMesas(this.idDelete);
+        }
+        if(this.idNew.length > 0){
+          this.agregarMesa(this.idNew);
+        }       
+        Swal.fire({
+          icon: 'success',
+          title: 'Éxito',
+          text: 'Mesas actualizadas'
+        });   
+        window.location.reload();
       }
       
       this.isEditMode = !this.isEditMode;
@@ -405,39 +422,31 @@ export default {
           onmove: this.dragMoveListener,
           enabled: this.isEditMode,
         })
-        // Remove or comment out the resizable part
-        /* .resizable({
-          edges: { right: true, bottom: true },
-          modifiers: [
-            interact.modifiers.restrictSize({
-              min: { width: 50, height: 50 },
-            }),
-          ],
-          enabled: this.isEditMode, 
-          listeners: {
-            move: (event) => this.resizeMove(event),
-          },
-        }); */
     },
     dragMoveListener(event) {
       const target = event.target;
-      const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
-      const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
 
-      target.style.transform = `translate(${x}px, ${y}px)`;
-      target.setAttribute('data-x', x);
-      target.setAttribute('data-y', y);
+      const draggableElement = target.closest('.draggable-image');
+      const id = draggableElement ? draggableElement.dataset.id : null; 
 
-      const img = this.images.find(image => image.id == target.dataset.id);
+      const x = (parseFloat(draggableElement.getAttribute('data-x')) || 0) + event.dx;
+      const y = (parseFloat(draggableElement.getAttribute('data-y')) || 0) + event.dy;
+
+      draggableElement.style.transform = `translate(${x}px, ${y}px)`;
+      draggableElement.setAttribute('data-x', x);
+      draggableElement.setAttribute('data-y', y);
+
+      const img = this.images.find(image => image.id == id);
       if (img) {
-        img.x = x; // Update the x position
-        img.y = y; // Update the y position
+        img.x = x; 
+        img.y = y; 
 
-        // Also update the corresponding mesa in mesasAgregadas
         const mesa = this.mesasAgregadas.find(mesa => mesa.id === img.id);
         if (mesa) {
-          mesa.posicion_x = x; // Update the mesa's x position
-          mesa.posicion_y = y; // Update the mesa's y position
+          mesa.posicion_x = x; 
+          mesa.posicion_y = y; 
+
+          console.log(`Mesa ID: ${mesa.id} movida a nueva posición:`, { x: mesa.posicion_x, y: mesa.posicion_y });
         }
       }
     },
@@ -459,35 +468,32 @@ export default {
     },
 
     duplicateImage(externalImg) {
-      // Obtener el contenedor de imágenes
       const container = this.$refs.imageContainer;
       const containerRect = container.getBoundingClientRect();
       
-      // Calcular una posición fija o ajustada para la nueva imagen
-      const offset = 20; // Offset to avoid overlap
-      const newPositionX = containerRect.width / 2 - 82.5; // Centered position
-      const newPositionY = containerRect.height / 2 - 82.5; // Centered position
+      const offset = 20; 
+      const newPositionX = containerRect.width / 2 - 82.5; 
+      const newPositionY = containerRect.height / 2 - 82.5; 
 
-      // Check for existing images to avoid overlap
       let positionX = newPositionX;
       let positionY = newPositionY;
 
-      // Adjust position if it overlaps with existing images
       this.images.forEach(img => {
         if (Math.abs(img.x - newPositionX) < 165 && Math.abs(img.y - newPositionY) < 165) {
-          positionX += offset; // Move to the right if overlapping
+          positionX += offset; 
         }
       });
 
       const newImg = {
-        id: externalImg.id,
+        id: this.mesasAgregadas.length + 1,
         name: externalImg.name,
         src: externalImg.src,
-        width: 165, // Set fixed width
-        height: 165, // Set fixed height
+        width: 165, 
+        height: 165,
         x: positionX,
         y: positionY,
         capacidad: externalImg.capacidad,
+        num_mesa: externalImg.num_mesa
       };
       
       // Agregar mesa a la lista mesasAgregadas
@@ -497,7 +503,7 @@ export default {
         imagenes: {},
         posicion_x: positionX,
         posicion_y: positionY,
-        num_mesa: externalImg.id
+        num_mesa: externalImg.num_mesa
       };
 
       this.mesasAgregadas.push(mesaAgregada);
@@ -507,7 +513,6 @@ export default {
 
       this.images.push(newImg);
       
-      // Esperar a que el DOM se actualice
       this.$nextTick(() => {
         const imgElement = this.$refs.imageContainer.querySelector(`.draggable-image[data-id="${newImg.id}"]`);
         if (imgElement) {
@@ -517,29 +522,10 @@ export default {
         }
       });
     },
-    removeImage(id) {
-      console.log('Intentando eliminar imagen con ID:', id);
-
-      // Find the image to be deleted
-      const imgToDelete = this.images.find(img => img.id === id);
-      
-      // Log the position of the image being deleted
-      if (imgToDelete) {
-        console.log('Eliminando imagen:', imgToDelete);
-        console.log('Posición de la imagen a eliminar:', { x: imgToDelete.x, y: imgToDelete.y });
-      } else {
-        console.error('No se encontró la imagen con ID:', id);
-      }
-
-      // Eliminar solo la imagen con el ID especificado en mesasAgregadas
-      console.log("id " + id);
-      //this.images = this.images.filter(img => img.id !== id);
-
-      // También eliminar la mesa agregada correspondiente usando el mismo ID
+    eliminarMesaLista(id) {
+      this.images = this.images.filter(img => img.id !== id);
       this.mesasAgregadas = this.mesasAgregadas.filter(mesa => mesa.id !== id);
 
-      // Imprimir el estado actualizado de mesasAgregadas
-      console.log('Estado actualizado de mesasAgregadas:', this.mesasAgregadas);
     },
     async addImagen(id) {
       try {
@@ -562,18 +548,15 @@ export default {
             
             const img = this.images.find(image => image.id === id);
             if (img) {
-              // Obtener la posición actual de la imagen
               const imgElement = this.$refs.imageContainer.querySelector(`.draggable-image[data-id="${id}"]`);
               const posX = parseFloat(imgElement.getAttribute('data-x') || 0);
               const posY = parseFloat(imgElement.getAttribute('data-y') || 0);
 
-              // Crear objeto de imagen como JSON
               const imagenJson = JSON.stringify({
                 nombre: file.name,
                 base64: base64Image
               });
 
-              // Buscar si ya existe una mesa con este ID en mesasAgregadas
               const mesaExistente = this.mesasAgregadas.find(mesa => mesa.id === id);
 
               if (mesaExistente) {
@@ -597,8 +580,6 @@ export default {
                 src: fileUrl
               };
 
-              console.log('Mesasssssssss Agregadassssssss:', this.mesasAgregadas);
-
               await Swal.fire({
                 title: "Imagen subida",
                 imageUrl: fileUrl,
@@ -614,21 +595,18 @@ export default {
       }
     },
     resizeMove(event) {
-      if (!this.isEditMode) return; // No hacer nada si no está en modo edición
+      if (!this.isEditMode) return; 
 
       const target = event.target;
       const img = this.images.find(image => image.id == target.dataset.id);
 
       if (img) {
-        // Actualiza el tamaño de la imagen
         img.width += event.deltaRect.width;
         img.height += event.deltaRect.height;
 
-        // Actualiza el estilo de la imagen
         target.style.width = `${img.width}px`;
         target.style.height = `${img.height}px`;
 
-        // Establece el nuevo tamaño de la imagen interna
         const imageElement = target.querySelector('img');
         if (imageElement) {
           imageElement.style.width = `${img.width}px`;
@@ -642,7 +620,47 @@ export default {
         console.error("El evento o la imagen no están definidos");
         return;
       }
-      event.preventDefault(); // Evita que se seleccione el texto
+      event.preventDefault();
+    },
+    async cambiarCapacidad(id) {
+      const mesa = this.mesasAgregadas.find(mesa => mesa.id === id);
+      if (!mesa) {
+        console.error("Mesa not found");
+        return;
+      }
+
+      const actual = mesa.capacidad;
+      const userResponse = await Swal.fire({
+        title: 'Gestionar Capacidad',
+        text: `La capacidad actual de la mesa es ${actual}. ¿Desea cambiarla?`,
+        input: 'text',
+        inputPlaceholder: 'Ingrese nueva capacidad',
+        showCancelButton: true,
+        confirmButtonText: 'Guardar',
+        cancelButtonText: 'Cancelar',
+      });
+
+      if (userResponse.isConfirmed) {
+        const CapacidadNueva = userResponse.value;
+
+        if (CapacidadNueva !== '' && !isNaN(CapacidadNueva)) {
+          mesa.capacidad = parseInt(CapacidadNueva); 
+          console.log(`Capacidad de la mesa ${id} actualizada a: ${mesa.capacidad}`);
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Capacidad Actualizada',
+            text: `La capacidad de la mesa ${id} se ha actualizado a ${mesa.capacidad}.`
+          });
+        } else {
+          console.error("Capacidad no válida");
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Por favor, ingrese una capacidad válida.'
+          });
+        }
+      }
     },
   },
 };
@@ -768,7 +786,6 @@ export default {
   opacity: 1;
 }
 
-/* Estilos para el modo edición */
 .resize-handle {
   width: 12px;
   height: 12px;
@@ -828,7 +845,14 @@ export default {
   background-color: #1976D2;
 }
 
-/* Animaciones */
+.manage-capacity-button {
+  background-color: #2196F3;
+}
+
+.manage-capacity-button:hover {
+  background-color: #1976D2;
+}
+
 .v-expand-transition-enter-active,
 .v-expand-transition-leave-active {
   transition: all 0.3s ease-out;
@@ -840,7 +864,6 @@ export default {
   transform: translateY(-20px);
 }
 
-/* Estilos para el modal */
 .modal-content {
   padding: 20px;
   text-align: center;
