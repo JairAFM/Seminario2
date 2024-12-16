@@ -20,7 +20,7 @@
       <v-btn class="text-none" stacked to="/reservation"> 
         <v-icon>mdi-calendar-month</v-icon> Reserva ya!
       </v-btn>
-      <v-btn class="text-none" stacked to="/detallesReserva">
+      <v-btn class="text-none" stacked to="/detallesReserva" v-if="!isAuthenticated_admin">
         <v-icon> mdi-eye </v-icon> Ver Reservas
       </v-btn>
       <v-btn class="text-none" stacked to="/maintenances" v-if="isAuthenticated_admin">
