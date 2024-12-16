@@ -1175,6 +1175,27 @@ def get_mesa(id):
         return jsonify({
             'message': f'Error al obtener la mesa: {str(e)}'
         }), 500
-        
+
+@app.route('/actualizar_capacidad/<int:id>', methods=['PUT'])
+def actualizar_capacidad(id):
+    data = request.json  
+    cursor = mysql.connection.cursor()
+    
+    query = """
+    UPDATE dbRestaurantes.mesas
+    SET capacidad = %s
+    WHERE id = %s
+    """
+    values = (data['capacidad'], id)
+    
+    try:
+        cursor.execute(query, values)  
+        mysql.connection.commit()  
+        cursor.close()
+        return jsonify({'message': f'Mesa con id {id} actualizada exitosamente'}), 200
+    except Exception as e:
+        cursor.close()
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
